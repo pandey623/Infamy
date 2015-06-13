@@ -1,0 +1,95 @@
+ //todo it would be fun to have limited slide mode where velocity is totally unlock from ship rotation
+        //this would mean that for a short time the ship could rotate independant of its velocity then would resume velocity alignment
+        //this is a post v0.1 of the ai though
+        //might be fun to have dynamic areodynamic values too
+
+        //todo calculate turn radius based on speed
+        //todo dynamic engine power
+        //it could be fun to disconnect craft orientation from craft velocity for a short while
+        
+        //make ai smart bout what their craft can do, if it rolls quickly have it roll to target then pitch up, if it yaws have it bank normally
+        
+
+
+
+
+
+		try plotting a path around obstacles by taking the inital avoidance steering direction and advancing it n units (5ish?) and check if in 
+		x = number of frames to reach point, then recompute a steering direction from there, continue until path to target is clear / reached target
+		or ran out of frames (if limited)
+
+
+
+		Entity
+			Faction
+			OrientedBounds
+			Name
+			EntityId
+			targeted by []
+			stealth -- maybe?
+			size
+			ignore collision -- for things like lasers that we dont want ships 'avoiding'
+			type -- ship, debris, astroid, weapon, container etc
+			subtype [small ship, large ship, bomber, astroid, satillite, etc]
+			groups -- a list of group names this entity belogns to. a group could be "Alpha Wing" or "Empty Cargo Containers" etc
+
+
+		Ship
+			Hull
+			Shield
+			Docking Points
+			Docking Bay
+			Systems
+				Comms
+				Weapon
+				Sensors
+				LifeSupport
+				Turret[]
+				GravityGenerator
+				Targeting
+				Engines
+				ShieldGenerator
+				Steering? -- disabling / destroying this drastically messes up ability to steer, this is not the steering component
+				
+		Pilot
+			AI[Skill Level], AutoPilot, Human
+
+		Goals
+			Mission Goals
+
+
+		CargoSystem
+
+		WarpSystem
+
+		SteeringSystem
+
+		InputSystem
+
+		EngineSystem
+
+		WeaponSystem
+			Pooled weapon instances
+			globally available
+			no need to set prefabs once set up
+			audio / impacts / particles also pooled
+
+		Targeting System
+			Get nearby enemies
+			Get nearby friendlies
+			Get nearby entities
+			PredictTargetPosition()
+			GetTarget()
+
+		Turret Targeting System ** managed by larger ships so all turrets dont focus on one thing
+
+		Communication System
+			RequestHelp
+			SendMessage
+			SendMissionMessage
+
+		MissionLog
+			Query(MessageType, MessageValue)
+			Add
+
+		

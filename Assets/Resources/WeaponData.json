@@ -1,0 +1,14 @@
+﻿{
+    "Energy": [
+        {
+            "WeaponName": "Laser",
+            "ControllerId": "Laser"
+        }
+    ],
+    "Warheads": [
+        {
+            "WeaponName": "Laser",
+            "ControllerId": "Laser"
+        }
+    ]
+}
