@@ -188,7 +188,7 @@
 //        }
 //    }
 
-//    //NOTE: turning radius degrees need to be multiplied by m_AeroFactor if useAeroFactor is turned on
+//    //NOTE: turning radius degrees need to be multiplied by areoFactor if useAeroFactor is turned on
 //    //might need to factor in aerodyanmic effect as well.
 //    public bool InsideTurningRadius(Vector3 point) {
 //        return false;

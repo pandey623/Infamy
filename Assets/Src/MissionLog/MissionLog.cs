@@ -36,5 +36,9 @@ public class MissionLog {
     public bool WasEntityDisabled(string entitId) {
         return false;
     }
+
+    public static bool EventFired(string eventName) {
+        return true;
+    }
 }
 

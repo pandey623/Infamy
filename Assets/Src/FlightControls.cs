@@ -13,8 +13,41 @@ public class FlightControls {
     public float rollOverride;
     public Vector3 destination; 
     public FlightControlMode mode;
+    public CurvySpline spline;
+    public float splineTF;
 
-    public FlightControls() { }
+    public void AutopilotGoToArea(Vector3 center, float radius, float maxThrottle = 1f) {
+        mode = FlightControlMode.Auto;
+
+    }
+
+    public void AutopilotGoTo(Vector3 location, float maxThrottle = 1f) {
+        mode = FlightControlMode.Auto;
+
+    }
+
+    public void AutopilotFollowSpline(CurvySpline spline, float tf) {
+        mode = FlightControlMode.Auto;
+
+    }
+
+    public void AutopilotArriveAt(Vector3 location, float decelerationScale = 0.5f) {
+        mode = FlightControlMode.Auto;
+
+    }
+
+    public void AutopilotFlyFormation(Entity leader, int slot) {
+        mode = FlightControlMode.Auto;
+
+    }
+
+    public void EnableAfterburner() {
+        
+    }
+
+    public void DisableAfterburner() {
+        
+    }
 
     public void Clamp() {
         yaw = Mathf.Clamp(yaw, -1, 1);
@@ -43,6 +76,7 @@ public class FlightControls {
     }
 
     public void TurnTo(Vector3 lookAt, float rollOverride = 0) {
+        mode = FlightControlMode.Auto;
         this.rollOverride = rollOverride;
         this.destination = lookAt;
     }

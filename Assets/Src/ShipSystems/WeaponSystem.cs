@@ -1,23 +1,21 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
 
-public class WeaponSystem {
-
-    public List<Gunbank> gunbanks = new List<Gunbank>();
+public class WeaponSystem : MonoBehaviour {
+    [NonSerialized]
+    public List<Gunbank> gunbanks;
+    [NonSerialized]
     public Timer timer;
     private Gunbank currentGunbank;
     private IWeaponController controller;
     private bool fireRequested = false;
-    private Transform transform;
-    private Entity entity;
     private Vector3 target;
 
-    public WeaponSystem(Entity entity) {
-        this.entity = entity;
-        this.transform = entity.transform;
-        this.gunbanks = new List<Gunbank>(transform.GetComponentsInChildren<Gunbank>());
+    private void Start() {
         this.timer = new Timer(0.20f);
+        this.gunbanks = new List<Gunbank>(transform.GetComponentsInChildren<Gunbank>());
         if (this.gunbanks.Count != 0) {
             this.currentGunbank = gunbanks[0];
             this.controller = WeaponManager.GetWeaponController(gunbanks[0].weaponId);
@@ -34,6 +32,7 @@ public class WeaponSystem {
     }
 
     public void Update() {
+        fireRequested = true;
         if (fireRequested && timer.ReadyWithReset(0.25f)) {
             controller.Spawn(currentGunbank.NextHardpoint, null);
             fireRequested = false;

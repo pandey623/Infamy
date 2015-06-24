@@ -17,34 +17,25 @@ public partial class Entity : MonoBehaviour {
     public NavigationSystem navSystem;
     public EngineSystem engineSystem;
 
-    [HideInInspector] public float radius;
-
     public void Awake() {
-        EntityDatabase.Add(this);
-        FactionManager.AddEntity(this);
         IntersectionModule_Intialize();
-        Transform systems = transform.FindChild("Systems");
-        if (systems) {
-            weaponSystem = new WeaponSystem(this);
-            sensorSystem = new SensorSystem(this);
-            commSystem = new CommunicationSystem(this);
-            navSystem = new NavigationSystem(this);
-            engineSystem = GetComponent<EngineSystem>();
-        }
+        weaponSystem = GetComponentInChildren<WeaponSystem>();
+        sensorSystem = GetComponentInChildren<SensorSystem>();
+        engineSystem = GetComponentInChildren<EngineSystem>();
+        //        commSystem = new CommunicationSystem(this);
+        //        navSystem = new NavigationSystem(this);
 
         if (gameObject.layer != LayerMask.NameToLayer("Entity")) {
             gameObject.layer = LayerMask.NameToLayer("Entity");
         }
-        //load initializer by path if present otherwise look up default by entity type
-        //otherwise load generic default
+    }
+
+    void Start() {
+        EntityDatabase.Add(this);
+        FactionManager.AddEntity(this);
     }
 
     public void Update() {
         IntersectionModule_Update();
     }
-
-    public void ApplyDamage(float damage, RaycastHit hitData) {
-        //if we have a 'DamageInterpreter' component delegate to that, else just subtract hull/sheilds as nessessary
-    }
-
 }

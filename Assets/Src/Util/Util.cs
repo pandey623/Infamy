@@ -10,6 +10,27 @@ public static class Util {
         return Mathf.Clamp(angle, min, max);
     }
 
+
+    public static float WrapAngle180(float angle) {
+        if (angle > 180f) {
+            return -(360f - angle);
+        } else if (angle < -180f) {
+            return angle + 360f;
+        } else if (angle == -180) {
+            return 180f;
+        }
+        return angle;
+    }
+
+    public static float WrapRadianPI(float radians) {
+        if (radians > Mathf.PI) {
+            return -((Mathf.PI * 2) - radians);
+        } else if (radians < -Mathf.PI) {
+            return radians + (Mathf.PI * 2f);
+        }
+        return radians;
+    }
+
     public static void LogAll(params object[] list) {
         var str = "";
         for (int i = 0; i < list.Length; i++) {

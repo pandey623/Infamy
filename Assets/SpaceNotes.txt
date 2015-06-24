@@ -18,8 +18,6 @@
 		x = number of frames to reach point, then recompute a steering direction from there, continue until path to target is clear / reached target
 		or ran out of frames (if limited)
 
-
-
 		Entity
 			Faction
 			OrientedBounds
@@ -92,4 +90,87 @@
 			Query(MessageType, MessageValue)
 			Add
 
+How do I define a formation?
+	By object reference -- that way formation specific properties can be collected
+	A leader finding delegate can be optionally provided, otherwise take first item in alpha sorted entity id list
+	A leader does not need to migrate to the leader slot, slot migration is a flag
+	
+Formation Properties
+	Shape -- list of slots
+	Size -- max units
+	Type -- types of units?
+	Tension -- how close units stick together
 		
+What do we do in a formation
+	Attack Run
+	Joust
+	Patrol / Defend
+	Exit / Warp / Enter Hanger
+	Arrive / Exit Warp
+	Coordinated Spline Maneuver
+		
+What interrupts a formation
+	Enemy fire
+	New Goal
+	Evasion
+	End of joust	
+	
+Shifting formation
+	Flight Formation
+	Attack Formation -- spread / shift for better firing angle w/o hitting friendlies
+	Flair -- swap slots with someone
+	Peel -- like a fighter plane, roll && drift		
+
+Flying in formation
+	Leader moves at slower pace while formation is collecting
+	Leader takes turns at 80% turn radius of least agile formation element
+	as formation elements align with formation node (tracked by dot and distance trend), increase their individual formation tension
+
+Entering formation
+	Ambient Goal -- when nothing is pressing, try to re-enter formation
+	Scripted Goal
+	Opportunistic -- when near a wing mate / ally request formation, spawns a temporary formation
+				  -- with those units, collect units as it moves, defers
+				  -- to actual formation if one is present and message goes out to enter it. 
+				  -- this might happen during an attack run on a larger ship, or if ships are in attack mode, 
+				  -- kinda near each other and no immediate threats in some range
+				  -- player requests 'form on me'
+
+
+
+Ambient Goals -- goal checks that run occasionally and might switch state / replace top priority goal
+	Defend Something && patrol
+	Patrol && keep formation
+	Evade
+	Avoid Obstacles
+	Recover Collision
+	Safety / Hide
+	Resume Formation
+
+var goal = DestroyShips()
+goal.Parallel(DisableShips())
+goal.Ambient(FlyFormation())
+goal.IgnoreShips([]);
+
+
+AIMissionScript_Mission1_Ship_SomeShip : AIMissionScript {
+
+	Initialize() {
+		ArrivalQueue("MissionEvent").Delay(20f);
+	}
+
+	Triggers() {
+
+		MissionPhase("First").Triggers(delegate => {
+			var condition1 = When(HostileInRadius("*", 500f) | HostileInArea("AreaName")).SetGoal("goalId").RunDelegate(delegate() => )
+			var condition2 = When(ShipDestroyed("X") & !HostileInRange()).RunDelegate()
+			var condition3 = When(condition1.Ran & Condition2.Ran).SetGoal();
+		}
+	}
+
+	Goals() {
+		DestroyShips("goalId", ["Alpha 1", "Alpha 2"]).Priority(1f)
+			.Then(OtherGoal)
+			.Then(MoreGoal)
+	}
+}

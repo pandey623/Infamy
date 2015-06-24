@@ -29,20 +29,19 @@ public class AIPilot : MonoBehaviour {
     public void Start () {
         this.entity = GetComponent<Entity>();
         this.engines = GetComponentInChildren<EngineSystem>();
-        Assert.IsNotNull(this.entity, "AIPilot needs an entity " + transform.name);
-        Assert.IsNotNull(this.engines, "AIPilot needs an engine system");
         this.controls = engines.FlightControls;
         this.sensorSystem = entity.sensorSystem;
         this.weaponSystem = entity.weaponSystem;
         this.commSystem = entity.commSystem;
         this.navSystem = entity.navSystem;
-
+        Assert.IsNotNull(this.entity, "AIPilot needs an entity " + transform.name);
+        Assert.IsNotNull(this.engines, "AIPilot needs an engine system");
+        Assert.IsNotNull(this.sensorSystem, "AIPilot needs a sensor system");
         goals = new List<AIGoal>(5);
         AddGoal(new AIGoal_Idle());
 
         AIGoalDescriptor desc = new AIGoalDescriptor(0.5f);
         AddGoal(new AIGoal_GoTo(desc, new Vector3(0, 0, 42f), 5f));
-
 
         aiStates = CreateAIStates(this);
 
@@ -68,8 +67,8 @@ public class AIPilot : MonoBehaviour {
     }
 
     public void Update() {
-        weaponSystem.Update();
-        sensorSystem.Update();
+//        weaponSystem.Update();
+       // sensorSystem.Update();
         //maybe some sort of initial 'should be evasive' query here
       //  activeState.Update();
       //  UpdateActiveGoals();

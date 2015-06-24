@@ -55,7 +55,7 @@ public class LaserController : MonoBehaviour, IWeaponController {
         GameObject target = hit.transform.gameObject;
         Entity entity = target.GetComponent<Entity>();
         if (entity == null) return;
-        entity.ApplyDamage(laser.damage, hit);
+//        entity.ApplyDamage(laser.damage, hit);
     }
 
     public void Despawn(IWeapon weapon) {

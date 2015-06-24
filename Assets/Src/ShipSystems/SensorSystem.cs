@@ -1,29 +1,32 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEngine.Assertions;
 using System.Collections.Generic;
 
-public class SensorSystem {
+public class SensorSystem : MonoBehaviour {
 
     public Entity Target;
-    private Entity entity;
-    private Transform transform;
+    [NonSerialized]
     public DotContainer ToTargetDots;
+    [NonSerialized]
     public DotContainer FromTargetDots;
+    [NonSerialized]
     public Vector3 ToTarget;
+    [NonSerialized]
     public Vector3 FromTarget;
+    [NonSerialized]
     public Vector3 ToTargetNormalized;
+    [NonSerialized]
     public Vector3 FromTargetNormalized;
+    [NonSerialized]
     public float TimeSinceTargetChanged = 0f;
+    [NonSerialized]
     public float DistanceToTarget = 0f;
 
-    public SensorSystem(Entity entity) {
-        this.entity = entity;
-        this.transform = entity.transform;
-    }
-
     public List<Entity> GetHostiles() {
-        return FactionManager.GetHostile(entity.factionId);
-    } 
+        // return FactionManager.GetHostile(entity.factionId);
+        return new List<Entity>();//todo fix this but try not to require an entity instance
+    }
 
     public void Update() {
         if (Target != null) {
@@ -56,33 +59,35 @@ public class SensorSystem {
     }
 
     public Entity GetNearestHostile() {
-        List<Entity> hostiles = FactionManager.GetFaction(entity.factionId).GetHostiles();
-        Debug.Log(hostiles.Count);
-        float minDistance = float.MaxValue;
-        Entity closest = null;
-
-        for (int i = 0; i < hostiles.Count; i++) {
-            Vector3 hostilePosition = hostiles[i].transform.position;
-            float distance = (hostilePosition - transform.position).sqrMagnitude;
-            if (distance < minDistance) {
-                closest = hostiles[i];
-                minDistance = distance;
-            }
-        }
-        return closest;
+        //        List<Entity> hostiles = FactionManager.GetFaction(entity.factionId).GetHostiles();
+        //        Debug.Log(hostiles.Count);
+        //        float minDistance = float.MaxValue;
+        //        Entity closest = null;
+        //
+        //        for (int i = 0; i < hostiles.Count; i++) {
+        //            Vector3 hostilePosition = hostiles[i].transform.position;
+        //            float distance = (hostilePosition - transform.position).sqrMagnitude;
+        //            if (distance < minDistance) {
+        //                closest = hostiles[i];
+        //                minDistance = distance;
+        //            }
+        //        }
+        //        return closest;
+        return null;
     }
 
     public List<Entity> GetHostilesInRange(float range) {
-        range *= range;
-        List<Entity> hostiles = FactionManager.GetFaction(entity.factionId).GetHostiles();
-        List<Entity> retn = new List<Entity>();
-        for (int i = 0; i < hostiles.Count; i++) {
-            Vector3 hostilePosition = hostiles[i].transform.position;
-            if ((hostilePosition - transform.position).sqrMagnitude < range) {
-                retn.Add(hostiles[i]);
-            }
-        }
-        return retn;
+        //        range *= range;
+        //        List<Entity> hostiles = FactionManager.GetFaction(entity.factionId).GetHostiles();
+        //        List<Entity> retn = new List<Entity>();
+        //        for (int i = 0; i < hostiles.Count; i++) {
+        //            Vector3 hostilePosition = hostiles[i].transform.position;
+        //            if ((hostilePosition - transform.position).sqrMagnitude < range) {
+        //                retn.Add(hostiles[i]);
+        //            }
+        //        }
+        //        return retn;
+        return null;
     }
 
     public float ForwardDotToTarget {

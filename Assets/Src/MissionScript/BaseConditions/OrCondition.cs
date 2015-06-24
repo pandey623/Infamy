@@ -1,0 +1,17 @@
+﻿public class OrCondition : Condition {
+    protected Condition c1;
+    protected Condition c2;
+
+    public OrCondition(Condition c1, Condition c2) {
+        this.c1 = c1;
+        this.c2 = c2;
+    }
+
+    public override bool Eval() {
+        if (this.inverted) {
+            return !(c1.Eval() || c2.Eval());
+        } else {
+            return c1.Eval() || c2.Eval();
+        }
+    }
+}
