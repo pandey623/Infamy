@@ -1,7 +1,6 @@
 ﻿using System;
+using UnityEngine;
 using System.Collections.Generic;
-using System.Diagnostics;
-using Debug = UnityEngine.Debug;
 
 /*
 ShipsDestroyed = new ShipsDestroyedCondition("1", "2");
@@ -14,106 +13,20 @@ When(ShipsDestoyed | TimeElapsed).Then(() => {
 
 */
 
-//public class TimeSinceCondition : NumericCondition {
+//public class TimeSinceCondition : NumericComparisonCondition {
 //
 //    //    public TimeSinceCondition(string evtName, float time) : base(this, ) {
 //    //        
 //    //    }
-//}
 
+    //public override float GetValue() {
+//      return Timer.missionTime - MissionLog.EventTimestamp("Evt");
+//}
+//}
+//When(TimeSince("Event") + 5f > TimeSince("Other") - TotalShipCount).Then(DoSomething);
 //todo implement NumericComparisonCondition and ArithmeticCondition
 //When(TimeSinceMissionStart + TimeSinceShipHit > TimesShipHit).Then()
 
-public class NumericCondition : Condition {
-    public enum Operator {
-        None, GreaterThan, GreaterThanEqualTo, LessThan, LessThanEqualTo,
-        Equal, NotEqual, Plus, Minus, Divide, Modulus, Multiply
-    }
-
-    protected float value;
-    protected Operator op;
-    protected NumericCondition condition1;
-    protected NumericCondition condition2;
-
-    public NumericCondition(NumericCondition c1, Operator op, NumericCondition c2) {
-        this.condition1 = c1;
-        this.condition2 = c2;
-        this.op = op;
-    }
-
-    public NumericCondition(NumericCondition c1, Operator op, float value) {
-        this.condition1 = c1;
-        this.op = op;
-        this.value = value;
-    }
-
-    public virtual float GetValue() {
-        return 0f;
-    }
-
-    public override bool Eval() {
-        if (op == Operator.None) {
-            return false;
-        }
-
-        if (condition2 != null) {
-            float c1Value = condition1.GetValue();
-            float c2Value = condition2.GetValue();
-            switch (op) {
-                case Operator.GreaterThan:
-                    return c1Value > c2Value;
-                case Operator.LessThan:
-                    return c1Value < c2Value;
-                case Operator.GreaterThanEqualTo:
-                    return c1Value >= c2Value;
-                case Operator.LessThanEqualTo:
-                    return c1Value <= c2Value;
-                case Operator.Equal:
-                    return c1Value == c2Value;
-                case Operator.NotEqual:
-                    return c1Value != c2Value;
-                case Operator.None:
-                    return false;
-            }
-        } else {
-
-            float c1Value = condition1.GetValue();
-            switch (op) {
-                case Operator.GreaterThan:
-                    return c1Value > value;
-                case Operator.LessThan:
-                    return c1Value < value;
-                case Operator.GreaterThanEqualTo:
-                    return c1Value >= value;
-                case Operator.LessThanEqualTo:
-                    return c1Value <= value;
-                case Operator.Equal:
-                    return c1Value == value;
-                case Operator.NotEqual:
-                    return c1Value != value;
-                case Operator.None:
-                    return false;
-            }
-        }
-        return false;
-    }
-
-    public static NumericCondition operator >(NumericCondition condition, float value) {
-        return new NumericCondition(condition, Operator.GreaterThan, value);
-    }
-
-    public static NumericCondition operator >(NumericCondition c1, NumericCondition c2) {
-        return new NumericCondition(c1, Operator.GreaterThan, c2);
-    }
-
-    public static NumericCondition operator <(NumericCondition condition, float value) {
-        return new NumericCondition(condition, Operator.LessThan, value);
-    }
-
-    public static NumericCondition operator <(NumericCondition c1, NumericCondition c2) {
-        return new NumericCondition(c1, Operator.LessThan, c2);
-    }
-}
 
 public class TimeElapsedCondition : Condition {
     private float time;
@@ -124,7 +37,7 @@ public class TimeElapsedCondition : Condition {
     }
 
     public override bool Eval() {
-        //        var t = new NumericCondition(this, NumericCondition.Operator.GreaterThan, 5f);
+        //        var t = new NumericComparisonCondition(this, NumericComparisonCondition.ComparisonOperator.GreaterThan, 5f);
         //        var x = t > 5;
         return false;
     }
@@ -142,34 +55,74 @@ public partial class MissionScript {
 //TimeSince("MissionEvent") > TimeSince("MissionEvent2")
 //DestroyedCount("ship1", "ship2") > SomeFnReturningAnInt()
 
+
+//when do these run?
+//on events?
+//periodically?
+//every frame?
+
+//major game events 
+//EntityArrived
+//EntityDeparted
+//EntityDocked
+//EntityDestroyed
+//EntityDisabled
+//EntityFactionChanged
+//MissionPhaseChanged
+//Custom Mission Events
+
+
+//Update Times -- Run on configurable cycle
+//             -- Custom Scheduler can be set per script
+//             -- Defaults to 10 times per frame
+
+//While --> once per frame?
+//Every --> once per `arg` seconds (min 1 frame)
+//Until --> once per frame
+//If --> runs when first encountered, not again
+//Else --> runs when first encountered, not again
+//ElseIf --> runs when first encountered, not again
+//When --> Every Major Mission Event, 10 times per second. Does not repeat
+//WhenEver --> Every Major Mission Event, 10 times per second. Repeats 
+//If(True).Do().ElseIf().Do().ElseIf().Do().Else(Action);
+
 public partial class MissionScript {
     [NonSerialized]
     protected List<ConditionEvaluator> evaluators;
 
-    private static TrueCondition TrueCondition = new TrueCondition();
-    private static FalseCondition FalseCondition = new FalseCondition();
 
     public TrueCondition True;
     public FalseCondition False;
 
     public MissionScript() {
         evaluators = new List<ConditionEvaluator>();
-        True = MissionScript.TrueCondition;
-        False = MissionScript.FalseCondition;
+        True = Condition.True;
+        False = Condition.False;
     }
+    
+
+    //TriggerEvaluator.Reset(); -- Everything starts over, If/Else/ElseIf will run again
+    //TriggerEvaluator.Pause(); -- Everything is paused
+    //TriggerEvaluator.Resume(); -- Everything resumes
 
     public void Triggers() {
+        //Whenever(MissionPhaseIs("PhaseName"), () => { EnableGroup("A") });
+        //Group("A", () => {});
+        //Group("B", () => {});
+        //DisableGroup("A");
+        //EnableGroup("B");
+        //ResetGroup("C");
+        
         When(True).Then(() => {
             When(True | !False).Then(SomeAction); //disable / enable?
             When(MissionEventTriggered("Alpha Warp In")).Then(SomeAction);
             //When(EntityDestroyed("Dauntless") & TimeSinceDestroyed("Dauntless") >= 10f)
             While(True).Do(SomeAction); //start / stopable?
             Until(True).Do(SomeAction); //start / stopable?
+//            If(True).Do(SomeAction)
+//            .Else(SomeAction)
+//            .ElseIf(True).Do(SomeAction)
         });
-
-        //        WhileDelay(MissionPhase("Second"), 1f).Do(() => {
-        //            
-        //        });
     }
 
     public void SomeAction() { }
@@ -182,56 +135,57 @@ public partial class MissionScript {
     }
 
     //todo this should be treated differently then When/Then
-    public ConditionEvaluator UntilDelay(Condition condition, float delay) {
-        ConditionEvaluator evaluator = new ConditionEvaluator(condition);
-        evaluators.Add(evaluator);
-        return evaluator;
-    }
-
-    //todo this should be treated differently then When/Then
     public ConditionEvaluator While(Condition condition) {
         ConditionEvaluator evaluator = new ConditionEvaluator(condition);
         evaluators.Add(evaluator);
         return evaluator;
     }
 
-    //todo this should be treated differently then When/Then
-    public ConditionEvaluator WhileDelay(Condition condition, float delay) {
+    //Runs Do() / ActionChain every `time` seconds
+    public ConditionEvaluator Every(float time) {
+        ConditionEvaluator evaluator = new ConditionEvaluator(null);
+        evaluators.Add(evaluator);
+        return evaluator;
+    }
+
+    //Acts as a trigger, continuously observes conditions. Executes Then() once
+    public ConditionEvaluator When(Condition condition) {
         ConditionEvaluator evaluator = new ConditionEvaluator(condition);
         evaluators.Add(evaluator);
         return evaluator;
     }
 
-    public ConditionEvaluator When(Condition condition) {
+    //runs only one time
+    //else / else if? -- probably a subclass
+    public ConditionEvaluator If(Condition condition) {
         ConditionEvaluator evaluator = new ConditionEvaluator(condition);
         evaluators.Add(evaluator);
         return evaluator;
     }
 }
 
+public enum ConditionEvaluatorState {
+   
+}
+
 public class ConditionEvaluator {
     private Condition condition;
-    private int x = 0;
     public delegate void Del();
 
     public ConditionEvaluator(Condition condition) {
         this.condition = condition;
     }
 
-    public bool Evaluate() {
-        if (condition.Eval()) {
-            return true;
-        } else {
-            return false;
-        }
+    public void Evaluate() {
+        
     }
+
     public void Do(Del del) {
-        x++;
-        Debug.Log(x);
+        
     }
 
     public void Then(Del del) {
-        del();
+
     }
 
 }

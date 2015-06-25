@@ -1,16 +1,9 @@
 ﻿public abstract class Condition {
-    protected bool inverted = false;
 
     public abstract bool Eval();
 
-    public Condition Invert() {
-        var c = MemberwiseClone() as Condition;
-        c.inverted = !inverted;
-        return c;
-    }
-
     public static Condition operator !(Condition c) {
-        return c.Invert();
+        return new InvertedCondition(c);
     }
 
     public static OrCondition operator |(Condition c1, Condition c2) {
@@ -20,4 +13,30 @@
     public static AndCondition operator &(Condition c1, Condition c2) {
         return new AndCondition(c1, c2);
     }
+
+    public static Condition operator ==(Condition c1, Condition c2) {
+        return new BooleanCondition(c1, EqualityOperator.Equal, c2);
+    }
+
+    public static Condition operator ==(Condition c1, bool b) {
+        Condition c2 = Condition.True;
+        if (!b) c2 = Condition.False;
+        return new BooleanCondition(c1, EqualityOperator.Equal, c2);
+    }
+
+    public static Condition operator !=(Condition c1, Condition c2) {
+        return new BooleanCondition(c1, EqualityOperator.NotEqual, c2);
+    }
+
+    public static Condition operator !=(Condition c1, bool b) {
+        Condition c2 = Condition.True;
+        if (!b) c2 = Condition.False;
+        return new BooleanCondition(c1, EqualityOperator.NotEqual, c2);
+    }
+
+    public static TrueCondition True = new TrueCondition();
+    public static FalseCondition False = new FalseCondition();
 }
+
+
+

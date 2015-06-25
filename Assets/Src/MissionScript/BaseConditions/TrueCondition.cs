@@ -1,5 +1,5 @@
 ﻿public class TrueCondition : Condition {
     public override bool Eval() {
-        return !inverted;
+        return true;
     }
 }

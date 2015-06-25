@@ -8,10 +8,6 @@
     }
 
     public override bool Eval() {
-        if (this.inverted) {
-            return !(c1.Eval() || c2.Eval());
-        } else {
-            return c1.Eval() || c2.Eval();
-        }
+        return c1.Eval() || c2.Eval();
     }
 }
