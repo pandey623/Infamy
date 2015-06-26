@@ -32,4 +32,12 @@ public abstract class Trigger {
         status = TriggerStatus.Pending;
         timer.Reset(interval);
     }
+
+    public void Pause() {
+        status = TriggerStatus.Paused;
+    }
+
+    public void Resume() {
+        status = TriggerStatus.Pending;
+    }
 }
