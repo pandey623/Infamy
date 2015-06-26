@@ -100,7 +100,6 @@ public partial class MissionScript {
         False = Condition.False;
     }
     
-
     //TriggerEvaluator.Reset(); -- Everything starts over, If/Else/ElseIf will run again
     //TriggerEvaluator.Pause(); -- Everything is paused
     //TriggerEvaluator.Resume(); -- Everything resumes
@@ -150,14 +149,6 @@ public partial class MissionScript {
 
     //Acts as a trigger, continuously observes conditions. Executes Then() once
     public ConditionEvaluator When(Condition condition) {
-        ConditionEvaluator evaluator = new ConditionEvaluator(condition);
-        evaluators.Add(evaluator);
-        return evaluator;
-    }
-
-    //runs only one time
-    //else / else if? -- probably a subclass
-    public ConditionEvaluator If(Condition condition) {
         ConditionEvaluator evaluator = new ConditionEvaluator(condition);
         evaluators.Add(evaluator);
         return evaluator;

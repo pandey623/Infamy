@@ -37,6 +37,3 @@
     public static TrueCondition True = new TrueCondition();
     public static FalseCondition False = new FalseCondition();
 }
-
-
-
