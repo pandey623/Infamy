@@ -113,3 +113,23 @@
         return new ComparisonCondition(c1, ComparisonOperator.NotEqual, new FloatConstantCondition(v));
     }
 }
+
+
+/*
+public TotalShipsDestroyedCondition : Condition {
+    public override float GetValue() {
+        return EntityDatabase.TotalShipsDestroyed;
+    }
+}
+
+public float TotalShipsDestroyed {
+    get { return new TotalShipsDestroyedCondition(); }
+}
+
+if(TotalShipsDestroyed - 2 > 5f & TimeSinceMissionStart % 2 == 1) {
+
+}
+
+When();
+
+*/
