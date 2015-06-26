@@ -1,4 +1,6 @@
-﻿public class ComparisonCondition : Condition {
+﻿using UnityEngine;
+
+public class ComparisonCondition : Condition {
 
     protected ComparisonOperator op;
     protected NumericCondition condition1;

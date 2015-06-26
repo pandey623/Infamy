@@ -20,8 +20,4 @@ public abstract class TriggerEvalator {
     }
 }
 
-public enum TriggerStatus {
-    Pending, Completed, Paused
-}
-
 
