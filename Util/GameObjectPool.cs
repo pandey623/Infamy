@@ -2,12 +2,15 @@
 using System.Collections.Generic;
 
 public class GameObjectPool {
+    //todo use a native array here
+    //todo if x seconds go by below n threshold, cull y items
     private List<GameObject> activeList;
     private List<GameObject> inactiveList;
 
     public int initialSize;
     public int maximumSize;
     public GameObject prefab;
+    private Transform parent;
 
     public GameObjectPool(GameObject prefab, int maximumSize = int.MaxValue, int initalSize = 0, Transform parent = null) {
         this.prefab = prefab;
@@ -15,7 +18,7 @@ public class GameObjectPool {
         this.maximumSize = maximumSize;
         this.activeList = new List<GameObject>(initalSize);
         this.inactiveList = new List<GameObject>(initalSize);
-
+        this.parent = parent;
         if (maximumSize < 0) maximumSize = int.MaxValue;
 
         for (int i = 0; i < initialSize; i++) {
@@ -28,7 +31,7 @@ public class GameObjectPool {
         }
     }
 
-    public GameObject Spawn(Transform parent = null) {
+    public GameObject Spawn() {
         GameObject obj = null;
         if (inactiveList.Count > 0) {
             obj = inactiveList[inactiveList.Count - 1];
@@ -51,5 +54,9 @@ public class GameObjectPool {
         activeList.Remove(obj);
         inactiveList.Add(obj);
         obj.SetActive(false);
+    }
+
+    public bool CanSpawn {
+        get { return activeList.Count < maximumSize; }
     }
 }

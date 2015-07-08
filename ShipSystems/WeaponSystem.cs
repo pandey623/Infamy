@@ -9,7 +9,7 @@ public class WeaponSystem : MonoBehaviour {
     [NonSerialized]
     public Timer timer;
     private Gunbank currentGunbank;
-    private IWeaponController controller;
+   // private IWeaponController controller;
     private bool fireRequested = false;
     private Vector3 target;
 
@@ -18,12 +18,12 @@ public class WeaponSystem : MonoBehaviour {
         this.gunbanks = new List<Gunbank>(transform.GetComponentsInChildren<Gunbank>());
         if (this.gunbanks.Count != 0) {
             this.currentGunbank = gunbanks[0];
-            this.controller = WeaponManager.GetWeaponController(gunbanks[0].weaponId);
+          //  this.controller = WeaponManager.GetWeaponController(gunbanks[0].weaponId);
         }
     }
 
     public float ActivePrimaryRange  {
-        get { return controller.Range; }
+        get { return 100; }
     }
 
     //todo -- fix this to accept a vector or transform and a score of 0,1 denoting accuracy
@@ -32,9 +32,8 @@ public class WeaponSystem : MonoBehaviour {
     }
 
     public void Update() {
-        fireRequested = true;
         if (fireRequested && timer.ReadyWithReset(0.25f)) {
-            controller.Spawn(currentGunbank.NextHardpoint, null);
+         //   controller.Spawn(currentGunbank.NextHardpoint, null);
             fireRequested = false;
         }
     }

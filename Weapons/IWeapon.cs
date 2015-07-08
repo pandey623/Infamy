@@ -1,5 +1,10 @@
 ﻿using UnityEngine;
+
 public interface IWeapon {
-    void Fire(Transform gunpoint, Transform target);
-    float Range { get; }
+    void Fire(WeaponSpawner spawner, WeaponFiringParameters firingParameters);
+    bool CanFire(WeaponFiringParameters firingParameters);
+   
+    GameObject gameObject { get; }
+    Transform transform { get; }
+    string Name { get; }
 }

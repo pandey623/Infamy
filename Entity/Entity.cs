@@ -11,19 +11,25 @@ public partial class Entity : MonoBehaviour {
     public EntityType type = EntityType.Fighter;
     public string variation;
 
+    [HideInInspector]
     public WeaponSystem weaponSystem;
+    [HideInInspector]
     public SensorSystem sensorSystem;
+    [HideInInspector]
     public CommunicationSystem commSystem;
+    [HideInInspector]
     public NavigationSystem navSystem;
+    [HideInInspector]
     public EngineSystem engineSystem;
+    [HideInInspector]
+    public TurretSystem turretSystem;
 
     public void Awake() {
         IntersectionModule_Intialize();
         weaponSystem = GetComponentInChildren<WeaponSystem>();
         sensorSystem = GetComponentInChildren<SensorSystem>();
         engineSystem = GetComponentInChildren<EngineSystem>();
-        //        commSystem = new CommunicationSystem(this);
-        //        navSystem = new NavigationSystem(this);
+        turretSystem = GetComponentInChildren<TurretSystem>();
 
         if (gameObject.layer != LayerMask.NameToLayer("Entity")) {
             gameObject.layer = LayerMask.NameToLayer("Entity");

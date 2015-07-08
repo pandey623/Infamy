@@ -26,7 +26,7 @@ Formation Movement -- use Arrive at control mode
 
 
 public class EngineSystem : MonoBehaviour {
-    private Rigidbody rigidbody;
+    private new Rigidbody rigidbody;
     private FlightControls controls;
     private Entity entity;
 

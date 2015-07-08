@@ -36,11 +36,8 @@ public class Gunbank : MonoBehaviour {
         hardpoints = children;
         return children;
     }
-}
 
-[CustomEditor(typeof (Gunbank))] 
-public class GunbankEditor : Editor {
-    void OnEnable() {
-        ((Gunbank) target).transform.name = "Gunbank"; //todo set this to the weapon bank type ie missile bank, beam emitter etc
+    public void Reset() {
+        name = "Gunbank";
     }
 }
