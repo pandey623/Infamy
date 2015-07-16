@@ -12,8 +12,6 @@ using UnityEngine;
 //a cool effect for individuals getting space might be to reduce aerodynamic effect (slip factor) and have them orient
 //more towards their target while travelling in direction of velocity
 
-
-
 public class SpaceCraftController : MonoBehaviour {
     [SerializeField]
     private float m_MaxEnginePower = 40f;        // The maximum output of the engine.

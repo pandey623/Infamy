@@ -1,65 +1,61 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
-[System.Serializable]
-public class WeaponData {
-    public string weaponId;
-    public float range;
-    public float fireRate;
-    public float aspectTime;
-    public float lifeTime;
-    public float accuracy;
-    public float hullDamage;
-    public float shieldDamage;
-    public float speed;
+//[System.Serializable]
+//public class WeaponData {
+//    public string weaponId;
+//    public float range;
+//    public float fireRate;
+//    public float aspectTime;
+//    public float lifeTime;
+//    public float accuracy;
+//    public float hullDamage;
+//    public float shieldDamage;
+//    public float speed;
 
-    public float aspectFOV;
-    public float aspectRange;
-    public bool aspectSeeking;
-    //todo add type, ammo, charge time, impact layer, fire mode, linkable etc
+//    public float aspectFOV;
+//    public float aspectRange;
+//    public bool aspectSeeking;
+//    //todo add type, ammo, charge time, impact layer, fire mode, linkable etc
 
-    public WeaponData(string weaponId) {
-        this.weaponId = weaponId;
-        WeaponDatabase.RegisterWeaponData(this.weaponId, this);
-        this.range = 500f;
-        this.fireRate = 1f;
-        this.aspectTime = -1;
-        this.lifeTime = -1;
-        this.accuracy = 1f;
-        this.hullDamage = 1f;
-        this.shieldDamage = 1f;
-        this.speed = 100f;
-    }
+//    public WeaponData(string weaponId) {
+//        this.weaponId = weaponId;
+//        WeaponDatabase.RegisterWeaponData(this.weaponId, this);
+//        this.range = 500f;
+//        this.fireRate = 1f;
+//        this.aspectTime = -1;
+//        this.lifeTime = -1;
+//        this.accuracy = 1f; //replace with spread range
+//        this.hullDamage = 1f;
+//        this.shieldDamage = 1f;
+//        this.speed = 100f;
+//    }
 
-    public static WeaponData Clone(WeaponData data) {
-        return data.MemberwiseClone() as WeaponData;
-    }
-}
+//    public static WeaponData Clone(WeaponData data) {
+//        return data.MemberwiseClone() as WeaponData;
+//    }
+//}
 
 public class WeaponDatabase : MonoBehaviour {
-
-    private static Dictionary<string, WeaponData> database;
+    //consider having weapon database just be a list of weapon name strings
+    //and rolling weapon data into the weapon instances themselves
+    
     private static List<string> weaponList;
     private static string[] rawWeaponList;
     private static bool dirtyWeaponList;
+    public static string DefaultWeapon = "Laser";
 
     static WeaponDatabase() {
-        database = new Dictionary<string, WeaponData>();
         weaponList = new List<string>();
-        dirtyWeaponList = true;
-        WeaponData laser = new WeaponData("Laser");
-        laser.range = 350f;
-        laser.lifeTime = -1;
-        laser.hullDamage = 5;
-        laser.aspectTime = -1;
-        laser.accuracy = 0.9f;
-        WeaponData vulcan = new WeaponData("Vulcan");
-        WeaponData beam = new WeaponData("Beam");
-        beam.lifeTime = 1.5f;
-        beam.range = 50f;
-        beam.speed = 50f;
+        //todo create weapon list for each entity class
+        weaponList.Add("Laser");
+        weaponList.Add("Vulcan");
+        weaponList.Add("Beam");
+        weaponList.Add("RaptorMissile");
+        weaponList.Add("Flak");
+        weaponList.Add("ParticleCannon");
+        rawWeaponList = weaponList.ToArray();
     }
-
 
     public static string[] GetWeaponList() {
         if (dirtyWeaponList) {
@@ -67,20 +63,6 @@ public class WeaponDatabase : MonoBehaviour {
             rawWeaponList = weaponList.ToArray();
         }
         return rawWeaponList;
-    }
-
-    public static WeaponData GetWeaponData(string weaponId) {
-        WeaponData data;
-        if (database.TryGetValue(weaponId, out data)) {
-            return WeaponData.Clone(data);
-        }
-        return null;
-    }
-
-    public static void RegisterWeaponData(string weaponId, WeaponData data) {
-        database[weaponId] = data;
-        weaponList.Add(weaponId);
-        dirtyWeaponList = true;
     }
 
     public static int GetWeaponIndex(string weaponId) {

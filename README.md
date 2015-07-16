@@ -1,2 +1,0 @@
-# Infamy
-Space Combat Simulator

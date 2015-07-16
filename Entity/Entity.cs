@@ -42,6 +42,6 @@ public partial class Entity : MonoBehaviour {
     }
 
     public void Update() {
-        IntersectionModule_Update();
+       // IntersectionModule_Update();
     }
 }

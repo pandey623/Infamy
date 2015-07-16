@@ -92,12 +92,25 @@ public class AIState_Attack : AIState {
         if (status != SubstateStatus.Running) {
             UpdateActiveSubstate();
         }
+        //aquiring aspect lock explicitly should be a separate state
+        //all attack states should try to fire, if we happen to get an aspect lock in another attack
+        //state, great. fire it! same with guns in aspect mode, if target in gun fov, shoot'em up
 
-     //   Debug.Log(sensorSystem.ForwardDotToTarget + ", " + weaponSystem.InPrimaryRange(sensorSystem.target));
+        //if(weaponSystem.HasAspectWeapon()) 
+        //if weaponSystem.aspectWeapon.InRange(target)
+        //if weaponSystem.aspectWeapon.InFOV(target)
+        //if weaponSystem.aspectWeapon.DamageRatingFor(target) > 0.5
+        //if weaponSystem.aspectWeapon.Locked
+        //if weaponSystem.aspectWeapon.CanFire
 
-        if (weaponSystem.InPrimaryRange(sensorSystem.Target) && sensorSystem.ForwardDotToTarget >= 0.995f) {
-            weaponSystem.Fire(); // todo add target
-        }
+        //weaponSystem.GetWeaponGroup("Primary").InRange
+        //weaponSystem.primary.InFOV
+        //float damagePotential = weaponSystem.primary.DamageRatingFor(target)
+        //Debug.Log(sensorSystem.ForwardDotToTarget + ", " + weaponSystem.InPrimaryRange(sensorSystem.target));
+
+        //if (weaponSystem.InPrimaryRange(sensorSystem.Target) && sensorSystem.ForwardDotToTarget >= 0.995f) {
+        //    weaponSystem.Fire(); // todo add target
+        //}
     }
 
     public void UpdateActiveSubstate() {

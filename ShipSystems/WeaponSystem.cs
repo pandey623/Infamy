@@ -3,82 +3,79 @@ using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
 
+[RequireComponent(typeof(Entity))]
 public class WeaponSystem : MonoBehaviour {
-    [NonSerialized]
-    public List<Gunbank> gunbanks;
-    [NonSerialized]
-    public Timer timer;
-    private Gunbank currentGunbank;
-   // private IWeaponController controller;
-    private bool fireRequested = false;
-    private Vector3 target;
+    public List<WeaponGroup> weaponGroups;
+    public List<Firepoint> firepoints;
+    private Entity entity;
 
-    private void Start() {
-        this.timer = new Timer(0.20f);
-        this.gunbanks = new List<Gunbank>(transform.GetComponentsInChildren<Gunbank>());
-        if (this.gunbanks.Count != 0) {
-            this.currentGunbank = gunbanks[0];
-          //  this.controller = WeaponManager.GetWeaponController(gunbanks[0].weaponId);
+    private void Awake() {
+        CollectWeaponGroups();
+    }
+
+    public void CollectWeaponGroups() {
+        firepoints = new List<Firepoint>(transform.GetComponentsInChildren<Firepoint>(true));
+        weaponGroups = new List<WeaponGroup>(transform.GetComponentsInChildren<WeaponGroup>(true));
+        EnsureDefaultWeaponGroups();
+        for (int i = 0; i < firepoints.Count; i++) {
+            string groupId = firepoints[i].weaponGroupId;
+            bool found = false;
+            for (int j = 0; j < weaponGroups.Count; j++) {
+                if (weaponGroups[j].groupId == groupId) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                firepoints[i].weaponGroupId = WeaponGroup.DefaultId;
+            }
         }
     }
 
-    public float ActivePrimaryRange  {
-        get { return 100; }
-    }
-
-    //todo -- fix this to accept a vector or transform and a score of 0,1 denoting accuracy
-    public void Fire() {
-        fireRequested = true;
-    }
-
-    public void Update() {
-        if (fireRequested && timer.ReadyWithReset(0.25f)) {
-         //   controller.Spawn(currentGunbank.NextHardpoint, null);
-            fireRequested = false;
+    protected void EnsureDefaultWeaponGroups() {
+        if (weaponGroups.Count == 0) {
+            AddWeaponGroup(WeaponGroup.DefaultId);
+            for (int i = 0; i < firepoints.Count; i++) {
+                firepoints[i].weaponGroupId = WeaponGroup.DefaultId;
+            }
+            return;
         }
+        for (int i = 0; i < weaponGroups.Count; i++) {
+            if (weaponGroups[i].groupId == WeaponGroup.DefaultId) {
+                return;
+            }
+        }
+        AddWeaponGroup(WeaponGroup.DefaultId);
     }
 
-    public bool InPrimaryRange(Entity target) {
-        return (target.transform.position - transform.position).sqrMagnitude <= ActivePrimaryRange * ActivePrimaryRange;
+    public void AddFirepoint() {
+        Transform weaponRoot = transform.FindChild("weapon_root");
+        if (weaponRoot == null) {
+            GameObject root = new GameObject();
+            root.transform.parent = transform;
+            root.transform.localPosition = Vector3.zero;
+            root.transform.localRotation = Quaternion.identity;
+            weaponRoot = root.transform;
+            weaponRoot.name = "weapon_root";
+        }
+        GameObject firepoint = new GameObject();
+        firepoint.transform.parent = weaponRoot;
+        firepoint.transform.localPosition = Vector3.zero;
+        firepoint.transform.localRotation = Quaternion.identity;
+        firepoint.AddComponent<Firepoint>();
+        firepoint.name = "Firepoint " + firepoints.Count;
+        firepoints.Add(firepoint.GetComponent<Firepoint>());
     }
 
-    public Gunbank[] FindGunbanks() {
-        return transform.GetComponentsInChildren<Gunbank>();
+    public void AddWeaponGroup(string groupId) {
+        Transform weaponRootTransform = transform.Find("weapon_root");
+        if (weaponRootTransform == null) {
+            weaponRootTransform = new GameObject("weapon_root").transform;
+            weaponRootTransform.parent = transform;
+        }
+        GameObject weaponRoot = weaponRootTransform.gameObject;
+        WeaponGroup group = weaponRoot.AddComponent<WeaponGroup>();
+        group.groupId = groupId;
+        weaponGroups.Add(group);
     }
 }
-
-public struct WeaponDescriptor {
-    public string name;
-    public string type;
-}
-
-//[CustomEditor(typeof(WeaponSystem))]
-//public class WeaponSystemEditor : Editor {
-//    public void OnEnable() {
-//        WeaponSystem ws = (WeaponSystem)target;
-//    }
-//
-//    public override void OnInspectorGUI() {
-//        List<string> weaponNames = new List<string>();
-//        weaponNames.Add("None");
-//        weaponNames.Add("Laser");
-//        weaponNames.Add("Missile");
-//        WeaponSystem weaponSystem = target as WeaponSystem;
-//        EditorGUIUtility.labelWidth = 75f;
-//        Gunbank[] gunbanks = weaponSystem.GetComponentsInChildren<Gunbank>();
-//        for (int i = 0; i < gunbanks.Length; i++) {
-//            EditorGUIUtility.labelWidth = 75f;
-//
-//            Gunbank gunbank = gunbanks[i];
-//            int index = weaponNames.IndexOf(gunbank.weaponId);
-//            if (index == -1) index = 0;
-//            EditorGUILayout.BeginHorizontal();
-//            index = EditorGUILayout.Popup("Gunbank " + i, index, weaponNames.ToArray());
-//            gunbank.weaponId = weaponNames[index];
-//            EditorGUIUtility.labelWidth = 50f;
-//            gunbank.ammunition = EditorGUILayout.IntField("Ammo", gunbank.ammunition);
-//            EditorGUILayout.Toggle("Linkable", gunbank.linkable);
-//            EditorGUILayout.EndHorizontal();
-//        }
-//    }
-//}

@@ -5,6 +5,12 @@ using Assert = UnityEngine.Assertions.Assert;
 
 //this is only for small craft, larger craft will need a more custom pilot
 public class AIPilot : MonoBehaviour {
+    public Transform[] waypoints;
+    public Vector3 goToPosition;
+    public bool arriveAtPosition;
+    public float goToDistanceThreshold;
+
+    public int waypointIndex;
 
     private AIState[] aiStates;
     private FlightControls controls;
@@ -27,6 +33,7 @@ public class AIPilot : MonoBehaviour {
 
     //todo -- probably takes a descriptor to read pilot stats out of
     public void Start () {
+        waypointIndex = 0;
         this.entity = GetComponent<Entity>();
         this.engines = GetComponentInChildren<EngineSystem>();
         this.controls = engines.FlightControls;
@@ -46,6 +53,11 @@ public class AIPilot : MonoBehaviour {
         aiStates = CreateAIStates(this);
 
         SetAIState();
+    }
+
+    public void SetGoTo(Vector3 goTo, bool arrive = false) {
+        this.goToPosition = goTo;
+        this.arriveAtPosition = arrive;
     }
 
     void OnCollisionEnter(Collision c) {
@@ -160,3 +172,4 @@ public class AIPilot : MonoBehaviour {
         };
     }
 }
+

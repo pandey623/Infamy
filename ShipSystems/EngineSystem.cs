@@ -34,6 +34,7 @@ public class EngineSystem : MonoBehaviour {
     public float AccelerationRate = 0.25f;
     public float TurnRate = 90f;
     public float Speed;
+    public bool useColliderRadius;
     public float radius;
     public float horizon = 5f;
     public float detectionRange = 10f;
@@ -60,8 +61,12 @@ public class EngineSystem : MonoBehaviour {
         Assert.IsNotNull(this.rigidbody, "EngineSystem expects to find a Rigidbody in its parent");
         if (rigidbody != null) {
             rigidbody.angularDrag = 1.5f;
+            rigidbody.useGravity = false;
         }
-        radius = GetComponent<Collider>().bounds.extents.magnitude;
+        Collider collider = GetComponent<Collider>();
+        if (useColliderRadius && collider != null) {
+            radius = GetComponent<Collider>().bounds.extents.magnitude;
+        }
         controls.spline = spline; // TEMPORARY!!
         controls.destination = transform.position;
     }
@@ -87,6 +92,7 @@ public class EngineSystem : MonoBehaviour {
         return rollAngle;
     }
 
+    //todo this doesnt belong here, spline following should be a behavior
     //assumes we are aligned with the spline we want to follow already
     public void AutoPilotFollowSpline() {
         CurvySpline spline = FlightControls.spline;
@@ -103,12 +109,12 @@ public class EngineSystem : MonoBehaviour {
             InfamySplineSegment segment = next.gameObject.GetComponent<InfamySplineSegment>();
             if (segment != null) {
                 controls.SetThrottle(segment.throttle);
-             
+
             } else {
                 controls.SetThrottle(1f);
             }
         }
-       
+
 
         controls.SetThrottle(1f);
         float dist = (controls.destination - transform.position).magnitude;
@@ -122,20 +128,45 @@ public class EngineSystem : MonoBehaviour {
         TurnTowardsDirection(goalDirection, roll);
         AdjustThrottleByVelocity();
     }
+    public bool playerMode = false;
+
+    private void UpdatePlayerMode() {
+        Vector3 localAV = transform.InverseTransformDirection(rigidbody.angularVelocity);
+        float turnRateRadians = TurnRate * Mathf.Deg2Rad;
+        float turnStep = turnRateRadians * Time.fixedDeltaTime;
+
+        localAV.x += FlightControls.pitch * turnStep;
+        localAV.y += FlightControls.yaw * 0.5f * turnStep; //todo make these variables
+        localAV.z += FlightControls.roll * 2f * turnStep;
+
+        localAV.x = Mathf.Clamp(localAV.x, -turnRateRadians, turnRateRadians);
+        localAV.y = Mathf.Clamp(localAV.y, -turnRateRadians, turnRateRadians);
+        localAV.z = Mathf.Clamp(localAV.z, -turnRateRadians, turnRateRadians);
+
+        rigidbody.angularVelocity = transform.TransformDirection(localAV);
+        AdjustThrottleByForce();
+    }
 
     public void FixedUpdate() {
-        controls.destination = debugTransform.position;
-        if (Vector3.Distance(transform.position, debugTransform.position) < 5f) {
-            debugTransform.position = Random.insideUnitSphere * 100f;
+        if (playerMode) {
+            UpdatePlayerMode();
+        } else {
+            Vector3 direction = (controls.destination - transform.position).normalized;
+            //TurnTowardsDirection(direction);
+            TurnTest(direction);
+            if (Vector3.Distance(transform.position, debugTransform.position) < 5f) {
+               // debugTransform.position = Random.insideUnitSphere * 100f;
+            }
+            //Vector3 direction = AdjustForAvoidance();
+           // controls.SetThrottle(1f);
+            //controls.SetThrottle(direction.magnitude / MaxSpeed);
+            if (controls.throttle != 0) {
+          //      TurnTowardsDirection(direction, 0f);
+          //      DrawArrow.ForDebug(transform.position, direction.normalized * 4f, Color.green);
+            }
+            AdjustThrottleByForce();
+            //AdjustThrottleByVelocity();
         }
-      //  if (spline != null) AutoPilotFollowSpline();
-      //  else {
-             Vector3 direction = AdjustForAvoidance();
-             controls.SetThrottle(direction.magnitude / MaxSpeed);
-             TurnTowardsDirection(direction, 0f);
-             DrawArrow.ForDebug(transform.position, direction.normalized * 4f, Color.green);
-              AdjustThrottleByForce();
-      //  }
     }
 
     //maybe this should live on sensor system?
@@ -167,7 +198,7 @@ public class EngineSystem : MonoBehaviour {
     private Vector3 GetCollisionAvoidanceForce(List<PossibleCollision> possibleCollisions) {
         Vector3 force = Vector3.zero;
         Vector3 velocity = rigidbody.velocity;
-        Vector3 position = transform.parent.position;
+        Vector3 position = transform.position;
 
         for (var i = 0; i < possibleCollisions.Count; i++) {
             PossibleCollision ps = possibleCollisions[i];
@@ -176,7 +207,7 @@ public class EngineSystem : MonoBehaviour {
 
             if (ps.timeToImpact == 0) {
                 avoidForce += (position - ps.transform.position);// * 2 * MaxSpeed;
-                if(drawAvoidanceForces) Debug.DrawRay(position, avoidForce, Color.red);
+                if (drawAvoidanceForces) Debug.DrawRay(position, avoidForce, Color.red);
             } else {
                 avoidForce = position + velocity * timeToImpact - ps.transform.position - ps.velocity * timeToImpact;
                 if (avoidForce[0] != 0 && avoidForce[1] != 0 && avoidForce[2] != 0) {
@@ -227,7 +258,18 @@ public class EngineSystem : MonoBehaviour {
     private void AdjustThrottleByForce() {
         var localVelocity = transform.InverseTransformDirection(rigidbody.velocity);
         float ForwardSpeed = Mathf.Max(0, localVelocity.z);
-
+        if (controls.throttle == 0) {
+            float speedStep = AccelerationRate * MaxSpeed * Time.fixedDeltaTime;
+            var mag = localVelocity.magnitude;
+            //todo setting velocity outright is not so good
+            if (ForwardSpeed > 0) {
+                rigidbody.velocity -= transform.forward * speedStep;
+            }
+            if (ForwardSpeed <= 0) {
+                rigidbody.velocity = Vector3.zero;
+            }
+            return;
+        }
         rigidbody.AddForce(MaxSpeed * controls.throttle * transform.forward, ForceMode.Acceleration);
         if (rigidbody.velocity.sqrMagnitude > 0) {
             // compare the direction we're pointing with the direction we're moving
@@ -240,6 +282,7 @@ public class EngineSystem : MonoBehaviour {
             rigidbody.velocity = Vector3.Lerp(rigidbody.velocity, transform.forward * ForwardSpeed, areoFactor * ForwardSpeed * slip * Time.deltaTime);
         }
         rigidbody.velocity = Vector3.ClampMagnitude(rigidbody.velocity, MaxSpeed);
+        Speed = rigidbody.velocity.magnitude;
     }
 
     private void AdjustThrottleByVelocity() {
@@ -263,11 +306,22 @@ public class EngineSystem : MonoBehaviour {
     //note that we do not turn as tightly as we can in this mode because input nodes are mapped
     //to input values, so only outer nodes will result in a full strength turn
 
-    private void TurnTowardsDirection(Vector3 direction, float roll = 0f, float rollTheta = 25f) {
+    private void TurnTest(Vector3 direction) {
+        Vector3 localTarget = transform.InverseTransformDirection(direction);
+        float targetAngleYaw = Mathf.Atan2(localTarget.x, localTarget.z);
+        float targetAnglePitch = -Mathf.Atan2(localTarget.y, localTarget.z);
+        float yaw = Mathf.Clamp(targetAngleYaw, -1, 1);
+        float pitch = Mathf.Clamp(targetAnglePitch, -1, 1);
+        float roll = Mathf.Clamp(-targetAngleYaw + GetRollAngle(), -1, 1);
+        controls.SetStickInputs(yaw, pitch, roll);
+        UpdatePlayerMode();
+    }
+
+    private void TurnTowardsDirection(Vector3 direction, float roll = 0f, float rollTheta = 50f) {
         roll = Util.WrapAngle180(roll);
 
-        float turnRateModifier = 0.1f;
-        float frameTurnModifier = 0.5f;
+        float turnRateModifier = 1f;
+        float frameTurnModifier = 1f;// 0.5f;
         Vector3 localTarget = transform.InverseTransformDirection(direction);
         float targetAngleYaw = Mathf.Atan2(localTarget.x, localTarget.z);
         float targetAnglePitch = -Mathf.Atan2(localTarget.y, localTarget.z);
@@ -277,18 +331,9 @@ public class EngineSystem : MonoBehaviour {
 
         float desiredX = targetAnglePitch;
         float desiredY = targetAngleYaw;
-        float desiredZ = 0f;
-
-        if (roll == 0f) {
-            desiredZ = -Mathf.Atan2(localTarget.x, localTarget.z);
-            rollTheta *= Mathf.Deg2Rad;
-            if (Util.Between(-rollTheta, desiredX, rollTheta) && Util.Between(-rollTheta, desiredY, rollTheta)) {
-                desiredZ = roll * Mathf.Deg2Rad + GetRollAngle();
-            }
-        } else {
-            desiredZ = roll * Mathf.Deg2Rad + GetRollAngle();
-        }
+        float desiredZ = -targetAngleYaw + GetRollAngle();//roll * Mathf.Deg2Rad + GetRollAngle();
         desiredZ = Util.WrapRadianPI(desiredZ);//stops endless spinning 
+
         float TurnRateRadians = TurnRate * Mathf.Deg2Rad;
 
         if (Mathf.Abs(desiredX) >= TurnRateRadians * turnRateModifier) {
@@ -301,20 +346,21 @@ public class EngineSystem : MonoBehaviour {
                 localAV.x = Mathf.Clamp(localAV.x - FrameTurnRateRadians * frameTurnModifier, desiredX, localAV.x);
             }
         }
-
+        float yawMod = 1f;
+        float rollMod = 1f;
         if (Mathf.Abs(desiredY) >= TurnRateRadians * turnRateModifier) {
-            localAV.y += FrameTurnRateRadians * Mathf.Sign(desiredY - TurnRateRadians * turnRateModifier);
+            localAV.y += FrameTurnRateRadians * Mathf.Sign(desiredY - TurnRateRadians * turnRateModifier) * yawMod;
             localAV.y = Mathf.Clamp(localAV.y, -TurnRateRadians, TurnRateRadians);
         } else {
             if (desiredY >= localAV.y) {
-                localAV.y = Mathf.Clamp(localAV.y + FrameTurnRateRadians * frameTurnModifier, localAV.y, desiredY);
+                localAV.y = Mathf.Clamp(localAV.y + (FrameTurnRateRadians * frameTurnModifier * yawMod), localAV.y, desiredY);
             } else {
-                localAV.y = Mathf.Clamp(localAV.y - FrameTurnRateRadians * frameTurnModifier, desiredY, localAV.y);
+                localAV.y = Mathf.Clamp(localAV.y - (FrameTurnRateRadians * frameTurnModifier * yawMod), desiredY, localAV.y);
             }
         }
 
         if (Mathf.Abs(desiredZ) >= TurnRateRadians * turnRateModifier) {
-            localAV.z += FrameTurnRateRadians * Mathf.Sign(desiredZ - TurnRateRadians * turnRateModifier);
+            localAV.z += FrameTurnRateRadians * Mathf.Sign(desiredZ - TurnRateRadians * turnRateModifier) * rollMod;
             localAV.z = Mathf.Clamp(localAV.z, -TurnRateRadians, TurnRateRadians);
         } else {
             if (desiredZ >= localAV.z) {
@@ -353,7 +399,7 @@ public class EngineSystem : MonoBehaviour {
             return -1;
         return tau;
     }
-    
+
 }
 
 

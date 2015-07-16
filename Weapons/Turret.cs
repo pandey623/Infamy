@@ -9,7 +9,6 @@ public class Turret : MonoBehaviour {
     [HideInInspector]
     public bool multiPart;
     public string weaponId;
-    public string weaponVariant;
     public string turretGroupId;
     public float rotationSpeed = 45f;
     public float loftSpeed = 45f;
@@ -19,35 +18,39 @@ public class Turret : MonoBehaviour {
     public Vector3 turretNormal;
     [HideInInspector]
     public Vector3 barrelNormal;
-    [HideInInspector]
-    public Vector3[] firepoints;
+
+    public Firepoint[] firepoints;
     private float normalSign;
 
-    private WeaponSpawner weaponSpawner;
+    private WeaponSpawner spawner;
     private WeaponFiringParameters firingParameters;
     private Entity entity;
+    private int currentFirepointIndex;
 
     void Awake() {
+        currentFirepointIndex = 0;
         turretNormal = Vector3.Cross(turretNormal, transform.right);
         normalSign = (Vector3.Dot(turretNormal, transform.forward) < 0) ? 1 : -1;
         multiPart = barrel != null;
-        if (Inverted && barrel != null) {
-            for (int i = 0; i < firepoints.Length; i++) {
-                Vector3 fp = firepoints[i];
-                fp.z = -fp.z;
-                firepoints[i] = fp;
-            }
+        if (!multiPart) {
+            Vector3 toFirepoint = (firepoints[0].transform.position - transform.position).normalized;
+            firepoints[0].transform.rotation = Quaternion.LookRotation(toFirepoint);
         }
+        //turret firepoints are created at import time
     }
 
     void Start() {
+        spawner = WeaponSpawner.Get(weaponId);
         entity = GetComponentInParent<Entity>();
-        if (entity.turretSystem) {
-            SetTurretGroup(entity.turretSystem.GetGroup(turretGroupId));
-        }
+        firingParameters = new WeaponFiringParameters(entity);
+    }
+
+    public void AddFirepoint(Firepoint firepoint) {
+        //firepoints.Add(firepoint);
     }
 
     public void AlignTo(Vector3 position) {
+        if(!multiPart) return;
         Vector3 turretAxis = transform.rotation * turretNormal; //same as transform.TransformDirection(turretNormal)
         Vector3 localTarget = transform.InverseTransformPoint(position);
         Vector3 projectedTarget = Vector3.ProjectOnPlane(localTarget, transform.up);
@@ -76,50 +79,42 @@ public class Turret : MonoBehaviour {
         } else if (fdot < 0) {
             barrel.localRotation = Quaternion.identity;
         }
-
     }
 
     void Update() {
+        //Debug.DrawLine(transform.position, transform.position + (transform.TransformDirection(turretNormal) * 3f), Color.red);
         //todo implement control modes so ai can take direct control
+        //todo implement predictive firing
         if (target == null || firingParameters == null || locked) return;
         AlignTo(target.position); //todo return dot of barrel to location / or 1 or 0 for button in fov
-        TryToFire();
-    }
-
-    public void SetTurretGroup(TurretGroup group) {
-        weaponSpawner = WeaponSpawner.Get(group.weaponId);
-        if(firingParameters == null) firingParameters = new WeaponFiringParameters(firepoints, entity, this);
-        WeaponData data = group.weaponData;
-        firingParameters.range = data.range;
-        firingParameters.lifetime = data.lifeTime;
-        firingParameters.fireRate = data.fireRate;
-        firingParameters.aspectLockTime = data.aspectTime;
-        firingParameters.accuracy = data.accuracy;
-        firingParameters.speed = data.speed;
+        var toFirepoit = firepoints[0].transform.position - transform.position;
+        Fire();
     }
 
     //todo might need to special case some weapon types
-    public void TryToFire() {
-        if (weaponSpawner == null) return;
-        if (weaponSpawner.CanFire(firingParameters)) {
-            if (multiPart) {
-                Vector3 toTarget = target.position - barrel.position;
-                if (Vector3.Dot(barrel.forward * normalSign, toTarget.normalized) > 0.98f) { //todo replace 0.98f with an fov value
-                    Quaternion rotation = Quaternion.LookRotation(barrel.forward * normalSign, barrel.up);
-                    IWeapon weapon = weaponSpawner.Spawn(firingParameters, barrel.TransformPoint(firingParameters.Fire), rotation);
-                    //if (weapon.Type == WeaponType.SweepBeam) {
-
-                    //}
-                }
-            } else {
-                Vector3 toTarget = target.position - transform.position;
-                //todo -- get button turret normals 
-                //if (Vector3.Dot(barrel.forward * normalSign, toTarget.normalized) > 0.98f) {
-                //    Quaternion offset = Quaternion.Euler(UnityEngine.Random.insideUnitSphere);
-                //    weaponSpawner.Spawn(firingParameters, barrel.TransformPoint(firingParameters.Fire), offset * barrel.rotation);
-                //}
+    public bool Fire() {
+        if (firepoints.Length == 0 || spawner == null || !spawner.CanFire(firingParameters)) return false;
+        if (multiPart) {
+            Vector3 toTarget = target.position - barrel.position;
+            if (Vector3.Dot(barrel.forward * normalSign, toTarget.normalized) > 0.98f) { //todo replace 0.98f with an fov value
+                firingParameters.hardpointTransform = firepoints[currentFirepointIndex].transform;
+                currentFirepointIndex = (currentFirepointIndex + 1) % firepoints.Length;
+                IWeapon weapon = spawner.Spawn(firingParameters);
+                firingParameters.lastFireTime = Time.time;
+            }
+        } else {
+            Vector3 toTarget = (target.position - transform.position).normalized;
+            Vector3 toFirepoint = (firepoints[0].transform.position - transform.position).normalized;
+            //Debug.Log(Vector3.Dot(toTarget, toFirepoint));
+            if (Vector3.Dot(toTarget, toFirepoint) > 0.25f) { 
+                firingParameters.hardpointTransform = firepoints[currentFirepointIndex].transform;
+                firingParameters.hardpointTransform.rotation = Quaternion.LookRotation(toTarget);
+                currentFirepointIndex = (currentFirepointIndex + 1) % firepoints.Length;
+                IWeapon weapon = spawner.Spawn(firingParameters);
+                firingParameters.lastFireTime = Time.time;
             }
         }
+        return true;
     }
 
     public bool Inverted {

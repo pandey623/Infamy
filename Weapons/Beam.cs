@@ -5,13 +5,20 @@ using UnityEngine;
 public class Beam : AbstractWeapon {
     public float beamScale = 1f;
     public float uvCycleTime;
+    public float wanderRange = 2f;
+    public float lifeTime;
+    public float speed;
+    public float range;
+    public float fireRate;
+    public LayerMask impactLayer;
+
     private LineRenderer lineRenderer;
     private Material beamMaterial;
     private float elapsedFireTime;
     private float beamLength;
-    public LayerMask impactLayer;
     private bool hitLastFrame = false;
     private GameObject impact;
+    protected Transform hardpoint;
 
     public void Awake() {
         lineRenderer = GetComponent<LineRenderer>();
@@ -22,14 +29,19 @@ public class Beam : AbstractWeapon {
         firingParameters.firingBeam = true;
         this.firingParameters = firingParameters;
         this.spawner = spawner;
+        this.hardpoint = firingParameters.hardpointTransform;
         elapsedFireTime = 0f;
         beamLength = 0f;
         lineRenderer.SetPosition(1, new Vector3(0f, 0f, 0f));
+        if (wanderRange != 0) {
+            float accuracy = ((wanderRange + (wanderRange * (1 - firingParameters.accuracy))) / wanderRange) * wanderRange;
+            transform.rotation *= Quaternion.Euler(UnityEngine.Random.insideUnitSphere * accuracy);
+        }
     }
 
     public void Update() {
         elapsedFireTime += Time.deltaTime;
-        if (elapsedFireTime >= firingParameters.lifetime) {
+        if (elapsedFireTime >= lifeTime) {
             spawner.Despawn(gameObject);
             firingParameters.firingBeam = false;
             firingParameters.lastFireTime = Time.time;
@@ -43,6 +55,8 @@ public class Beam : AbstractWeapon {
             }
             return;
         }
+        transform.position = hardpoint.position;
+
         RaycastHit hit;
         if (Physics.Raycast(new Ray(transform.position, transform.forward), out hit, beamLength, impactLayer)) {
             beamLength = (hit.point - transform.position).magnitude;
@@ -57,7 +71,7 @@ public class Beam : AbstractWeapon {
             }
             impact = null;
             hitLastFrame = false;
-            beamLength = Mathf.Clamp(beamLength + (firingParameters.speed * Time.deltaTime), 0, firingParameters.range);
+            beamLength = Mathf.Clamp(beamLength + (speed * Time.deltaTime), 0, range);
         }
 
         beamMaterial.SetTextureOffset("_MainTex", new Vector2(Time.time * uvCycleTime, 0f));
@@ -66,6 +80,8 @@ public class Beam : AbstractWeapon {
     }
 
     public override bool CanFire(WeaponFiringParameters fp) {
-        return !fp.firingBeam && base.CanFire(fp);
+        if (fp.firingBeam) return false;
+        float lastFireTime = fp.lastFireTime;
+        return Time.time - lastFireTime > fireRate;
     }
 }

@@ -7,73 +7,39 @@ using UnityEngine;
 
 public class WeaponFiringParameters {
     public Entity entity;
-    public Turret turret;
-    public Vector3[] firepoints;
 
     public float lastFireTime;
     public float targetAquiredTime;
     public float totalAspectLockTime;
     public float currentAspectLockTime;
     public float longestAspectLockTime;
-    public int currentFirepointIndex;
 
-    public float fireRate;
-    public float range;
-    public float lifetime;
     public float aspectLockTime;
     public float accuracy;
-    public float speed;
     public bool firingBeam;
 
-    public bool invertedFireDirection;
+    //for turrets this is turret or barrel, for fixed weapons on fighters this is the root model object
+    //firing points are relative (in local space) to this transform
+    public Transform hardpointTransform; 
 
-    public WeaponFiringParameters(Vector3[] firepoints, Entity entity, Turret turret) {
-        this.firepoints = firepoints;
+
+    public WeaponFiringParameters(Entity entity) {
         this.entity = entity;
-        this.turret = turret;
-        this.currentFirepointIndex = 0;
         this.lastFireTime = 0f;
         this.targetAquiredTime = 0f;
         this.totalAspectLockTime = 0f;
         this.currentAspectLockTime = 0f;
         this.longestAspectLockTime = 0f;
-        this.fireRate = -1f;
-        this.range = -1f;
-        this.lifetime = -1f;
         this.aspectLockTime = -1f;
         this.accuracy = 1f;
-        this.firingBeam = false;
-        this.speed = 100f;
-
-        if (turret != null) {
-            invertedFireDirection = turret.Inverted;
-        }
-    }
-
-    public Vector3 NextFirePoint {
-        get {
-            int idx = currentFirepointIndex + 1;
-            if (idx == firepoints.Length) idx = 0;
-            return firepoints[idx];
-        }
-    }
-
-    public Vector3 Fire {
-        get {
-            currentFirepointIndex++;
-            lastFireTime = Time.time;
-            if (currentFirepointIndex == firepoints.Length) {
-                currentFirepointIndex = 0;
-            }
-            return firepoints[currentFirepointIndex];
-        }
+        this.firingBeam = false;//abstract with a beam id
     }
 
     public void UpdateAspectLockTime(IWeapon weapon) {
-        if (turret != null && turret.target != null) {
+        //if (turret != null && turret.target != null) {
 
-        } else {
-            SensorSystem sensors = entity.sensorSystem;
+        //} else {
+        //    SensorSystem sensors = entity.sensorSystem;
           //  if (!weapon.AspectSeeking || sensors == null) return;
             //if (sensors.TargetInAspectRange(weapon.AspectRange, weapon.AspectFOV)) {
             //    totalAspectLockTime += Time.deltaTime;
@@ -84,7 +50,7 @@ public class WeaponFiringParameters {
             //} else {
             // currentAspecLockTime = 0f;
             //}
-        }
+       // }
     }
 
     public void TargetAquired(Entity target) {

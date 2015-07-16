@@ -16,6 +16,7 @@ public class FlightControls {
     public CurvySpline spline;
     public float splineTF;
 
+
     public void AutopilotGoToArea(Vector3 center, float radius, float maxThrottle = 1f) {
         mode = FlightControlMode.Auto;
 
@@ -62,6 +63,7 @@ public class FlightControls {
         this.yaw = yaw;
         this.pitch = pitch;
         this.roll = roll;
+        Clamp();
     }
 
     public void SetThrottle(float throttle) {

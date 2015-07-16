@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
 
 //use actual prefab script for weapon behavior
@@ -16,7 +17,7 @@ public class WeaponSpawner : MonoBehaviour {
     public GameObject weaponPrefab;
 
     protected GameObjectPool weaponPool;
-    protected IWeapon referenceWeapon;
+    protected AbstractWeapon referenceWeapon;
     public GameObject[] impactPrefabs;
     public GameObject[] muzzleFlashPrefabs;
 
@@ -33,27 +34,44 @@ public class WeaponSpawner : MonoBehaviour {
     protected int impactIdx;
     protected int muzzleIdx;
 
+    protected float trailTime;
+    protected bool hasTrail;
+
     public void Awake() {
-        referenceWeapon = weaponPrefab.GetComponent<IWeapon>();
+        referenceWeapon = weaponPrefab.GetComponent<AbstractWeapon>();
+        if (referenceWeapon.transform.GetComponent<TrailRenderer>()) {
+            hasTrail = true;
+            trailTime = referenceWeapon.transform.GetComponent<TrailRenderer>().time;
+        }
         WeaponSpawner.Register(referenceWeapon.Name, this);
-        impactPools = new GameObjectPool[impactPrefabs.Length];
-        muzzlePools = new GameObjectPool[muzzleFlashPrefabs.Length];
         weaponPool = new GameObjectPool(weaponPrefab, maxPoolSize, initialPoolSize, transform);
-        for (int i = 0; i < impactPrefabs.Length; i++) {
-            impactPools[i] = new GameObjectPool(impactPrefabs[i], maxImpactPoolSize, initialImpactPoolSize, transform);
+
+        if (impactPrefabs.Length != null && impactPrefabs.Length > 0) {
+            impactPools = new GameObjectPool[impactPrefabs.Length];
+            for (int i = 0; i < impactPrefabs.Length; i++) {
+                impactPools[i] = new GameObjectPool(impactPrefabs[i], maxImpactPoolSize, initialImpactPoolSize, transform);
+            }
         }
-        for (int i = 0; i < muzzleFlashPrefabs.Length; i++) {
-            muzzlePools[i] = new GameObjectPool(muzzleFlashPrefabs[i], maxMuzzleFlashPoolSize, initialMuzzleFlashPoolSize, transform);
-        }
+
+        if (muzzleFlashPrefabs != null && muzzleFlashPrefabs.Length > 0) {
+            muzzlePools = new GameObjectPool[muzzleFlashPrefabs.Length];
+
+            for (int i = 0; i < muzzleFlashPrefabs.Length; i++) {
+                muzzlePools[i] = new GameObjectPool(muzzleFlashPrefabs[i], maxMuzzleFlashPoolSize, initialMuzzleFlashPoolSize, transform);
+            }
+        } 
         impactIdx = 0;
         muzzleIdx = 0;
     }
 
-    public IWeapon Spawn(WeaponFiringParameters firingParameters, Vector3 position, Quaternion rotation) {
+    public IWeapon Spawn(WeaponFiringParameters firingParameters) {
         GameObject weaponRoot = weaponPool.Spawn();
         IWeapon weapon = weaponRoot.GetComponent<IWeapon>();
-        weaponRoot.transform.position = position;
-        weaponRoot.transform.rotation = rotation;
+        weaponRoot.transform.position = firingParameters.hardpointTransform.position;
+        weaponRoot.transform.rotation = firingParameters.hardpointTransform.rotation;
+        if (hasTrail) {
+            weapon.gameObject.GetComponent<TrailRenderer>().time = trailTime;
+        }
         weapon.Fire(this, firingParameters);
         return weapon;
     }
@@ -71,7 +89,11 @@ public class WeaponSpawner : MonoBehaviour {
                 muzzlePools[poolIndex].Despawn(obj);
                 break;
             case WeaponSpawnerType.Projectile:
-                weaponPool.Despawn(obj);
+                if (hasTrail) {
+                    StartCoroutine(DespawnTrail(obj, this));
+                } else {
+                    weaponPool.Despawn(obj);
+                }
                 break;
             case WeaponSpawnerType.Audio:
                 break;
@@ -82,10 +104,12 @@ public class WeaponSpawner : MonoBehaviour {
         return weaponPool.CanSpawn && referenceWeapon.CanFire(firingParameters);
     }
 
-    public GameObject SpawnMuzzleFlash(Vector3 position, Quaternion rotation) {
+    public GameObject SpawnMuzzleFlash(Transform parent) {
+        if (muzzlePools == null) return null;
         GameObject despawnRoot = muzzlePools[muzzleIdx].Spawn();
+        if (despawnRoot == null) return null;
         AbstractWeaponSpawnable despawner = despawnRoot.GetComponent<AbstractWeaponSpawnable>();
-        despawner.Spawn(this, WeaponSpawnerType.MuzzleFlash, muzzleIdx, position, rotation);
+        despawner.Spawn(this, WeaponSpawnerType.MuzzleFlash, muzzleIdx, parent);
         muzzleIdx++;
         if (muzzleIdx == muzzlePools.Length) {
             muzzleIdx = 0;
@@ -94,7 +118,9 @@ public class WeaponSpawner : MonoBehaviour {
     }
 
     public GameObject SpawnImpact(Vector3 position, Quaternion rotation) {
+        if (impactPools == null) return null;
         GameObject despawnRoot = impactPools[impactIdx].Spawn();
+        if (despawnRoot == null) return null;
         AbstractWeaponSpawnable despawner = despawnRoot.GetComponent<AbstractWeaponSpawnable>();
         despawner.Spawn(this, WeaponSpawnerType.Impact, impactIdx, position, rotation);
         impactIdx++;
@@ -120,5 +146,18 @@ public class WeaponSpawner : MonoBehaviour {
             return spawner;
         }
         return null;
+    }
+
+    static IEnumerator DespawnTrail(GameObject weaponRoot, WeaponSpawner spawner) {
+        TrailRenderer trail = weaponRoot.GetComponent<TrailRenderer>();
+        if (trail == null) {
+            spawner.weaponPool.Despawn(weaponRoot);
+        } else {
+            float trailTime = trail.time;
+            trail.time = -1;
+            yield return 0;
+            trail.time = trailTime;
+            spawner.weaponPool.Despawn(weaponRoot);
+        }
     }
 }
