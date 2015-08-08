@@ -22,7 +22,8 @@ public class SensorSystem : MonoBehaviour {
     public float TimeSinceTargetChanged = 0f;
     [NonSerialized]
     public float DistanceToTarget = 0f;
-
+    public Vector3 lastTargetPos;
+    public Vector3 targetPos;
     public List<Entity> GetHostiles() {
         // return FactionManager.GetHostile(entity.factionId);
         return new List<Entity>();//todo fix this but try not to require an entity instance
@@ -30,6 +31,8 @@ public class SensorSystem : MonoBehaviour {
 
     public void Update() {
         if (Target != null) {
+            lastTargetPos = targetPos;
+            targetPos = Target.transform.position;
             TimeSinceTargetChanged += Time.deltaTime;
             ToTargetDots = RightUpForwardDotToEntity(Target);
             FromTargetDots = RightUpForwardDotFromEntity(Target);
@@ -99,7 +102,7 @@ public class SensorSystem : MonoBehaviour {
     }
 
     public Vector3 TargetPosition {
-        get { return (Target == null) ? Vector3.zero : Target.transform.position; }
+        get { return (Target == null) ? Vector3.zero : targetPos; }
     }
 
     public DotContainer RightUpForwardDotFromEntity(Entity entity) {

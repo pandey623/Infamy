@@ -2,7 +2,7 @@
 using UnityEditor;
 
 public class StringInputPopup : EditorWindow {
-    private string input;
+    private string input = string.Empty;
 
     public delegate void OnInputSet(string groupName);
     public OnInputSet onInputSet;
@@ -11,7 +11,9 @@ public class StringInputPopup : EditorWindow {
 
     public void OnGUI() {
         input = EditorGUILayout.TextField(prompt, input);
-        if (GUILayout.Button("Ok")) {
+        Event e = Event.current;
+
+        if (input.Length > 0 && (e.keyCode == KeyCode.Return || GUILayout.Button("Ok"))) {
             if (onInputSet != null) {
                 onInputSet(input);
             }

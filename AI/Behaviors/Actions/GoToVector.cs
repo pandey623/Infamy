@@ -7,17 +7,15 @@ public class GoToVector : Action {
     private AIPilot pilot;
     public SensorSystem sensorSystem;
     public Transform target;
-    private FlightControls controls;
 
     public override void OnAwake() {
         pilot = GetComponent<AIPilot>();
         sensorSystem = GetComponent<SensorSystem>();
-        controls = pilot.FlightControls;
     }
 
     public override void OnStart() {
-        controls.destination = pilot.goToPosition;
-        controls.throttle = 1f;
+        pilot.FlightControls.destination = pilot.goToPosition;
+        pilot.FlightControls.throttle = 1f;
         pilot.goToDistanceThreshold = 5f;
     }
 

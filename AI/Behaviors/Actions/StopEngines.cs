@@ -5,15 +5,13 @@ using BehaviorDesigner.Runtime.Tasks;
 public class StopEngines : Action {
 
     private AIPilot pilot;
-    private FlightControls controls;
 
     public override void OnAwake() {
         pilot = GetComponent<AIPilot>();
-        controls = pilot.FlightControls;
     }
 
     public override void OnStart() {
-        controls.throttle = 0f;
+        pilot.FlightControls.throttle = 0f;
         pilot.goToDistanceThreshold = 5f;
     }
 

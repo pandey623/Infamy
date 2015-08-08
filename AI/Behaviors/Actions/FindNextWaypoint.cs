@@ -11,11 +11,7 @@ public class FindNextWaypoint : Action {
     }
 
     public override TaskStatus OnUpdate() {
-        if (pilot.waypoints.Length == pilot.waypointIndex) {
-            return TaskStatus.Failure;
-        } else {
-            pilot.goToPosition = pilot.waypoints[pilot.waypointIndex++].position;
-            return TaskStatus.Success;
-        }
+        pilot.goToPosition = pilot.waypoints[UnityEngine.Random.Range(0, 5)].position;
+        return TaskStatus.Success;
     }
 }

@@ -42,7 +42,6 @@ public class EngineSystem : MonoBehaviour {
     public CurvySpline spline;
     public float areoFactor = 1f;
     public float slip = 0.75f;
-    public Timer timer = new Timer();
     public float arrivalDecelerationScale = 0.25f; // this is a knob to turn to dictate how much time to spend decelerating --> lower value = more time
 
     public float currentTF = 0f;
@@ -129,22 +128,22 @@ public class EngineSystem : MonoBehaviour {
         AdjustThrottleByVelocity();
     }
     public bool playerMode = false;
+    public bool ignoreAV = false;
 
     private void UpdatePlayerMode() {
         Vector3 localAV = transform.InverseTransformDirection(rigidbody.angularVelocity);
         float turnRateRadians = TurnRate * Mathf.Deg2Rad;
         float turnStep = turnRateRadians * Time.fixedDeltaTime;
-
-        localAV.x += FlightControls.pitch * turnStep;
-        localAV.y += FlightControls.yaw * 0.5f * turnStep; //todo make these variables
-        localAV.z += FlightControls.roll * 2f * turnStep;
+        //todo play with checking for distance from target & current velocity, if within some range swap to prescision steering (approach / away)
+        localAV.x += FlightControls.pitch * 1 * turnStep;
+        localAV.y += FlightControls.yaw * 1 * turnStep; //todo make these variables
+        localAV.z += FlightControls.roll * 1 * turnStep;
 
         localAV.x = Mathf.Clamp(localAV.x, -turnRateRadians, turnRateRadians);
         localAV.y = Mathf.Clamp(localAV.y, -turnRateRadians, turnRateRadians);
         localAV.z = Mathf.Clamp(localAV.z, -turnRateRadians, turnRateRadians);
 
         rigidbody.angularVelocity = transform.TransformDirection(localAV);
-        AdjustThrottleByForce();
     }
 
     public void FixedUpdate() {
@@ -152,20 +151,8 @@ public class EngineSystem : MonoBehaviour {
             UpdatePlayerMode();
         } else {
             Vector3 direction = (controls.destination - transform.position).normalized;
-            //TurnTowardsDirection(direction);
             TurnTest(direction);
-            if (Vector3.Distance(transform.position, debugTransform.position) < 5f) {
-               // debugTransform.position = Random.insideUnitSphere * 100f;
-            }
-            //Vector3 direction = AdjustForAvoidance();
-           // controls.SetThrottle(1f);
-            //controls.SetThrottle(direction.magnitude / MaxSpeed);
-            if (controls.throttle != 0) {
-          //      TurnTowardsDirection(direction, 0f);
-          //      DrawArrow.ForDebug(transform.position, direction.normalized * 4f, Color.green);
-            }
             AdjustThrottleByForce();
-            //AdjustThrottleByVelocity();
         }
     }
 
@@ -258,18 +245,18 @@ public class EngineSystem : MonoBehaviour {
     private void AdjustThrottleByForce() {
         var localVelocity = transform.InverseTransformDirection(rigidbody.velocity);
         float ForwardSpeed = Mathf.Max(0, localVelocity.z);
-        if (controls.throttle == 0) {
-            float speedStep = AccelerationRate * MaxSpeed * Time.fixedDeltaTime;
-            var mag = localVelocity.magnitude;
-            //todo setting velocity outright is not so good
-            if (ForwardSpeed > 0) {
-                rigidbody.velocity -= transform.forward * speedStep;
-            }
-            if (ForwardSpeed <= 0) {
-                rigidbody.velocity = Vector3.zero;
-            }
-            return;
-        }
+        //if (controls.throttle == 0) {
+        //    float speedStep = AccelerationRate * MaxSpeed * Time.fixedDeltaTime;
+        //    var mag = localVelocity.magnitude;
+        //    //todo setting velocity outright is not so good
+        //    if (ForwardSpeed > 0) {
+        //        rigidbody.velocity -= transform.forward * speedStep;
+        //    }
+        //    if (ForwardSpeed <= 0) {
+        //        rigidbody.velocity = Vector3.zero;
+        //    }
+        //    return;
+        //}
         rigidbody.AddForce(MaxSpeed * controls.throttle * transform.forward, ForceMode.Acceleration);
         if (rigidbody.velocity.sqrMagnitude > 0) {
             // compare the direction we're pointing with the direction we're moving
@@ -285,36 +272,194 @@ public class EngineSystem : MonoBehaviour {
         Speed = rigidbody.velocity.magnitude;
     }
 
+    //todo this is constant acceleration, should probably be slerped somehow
     private void AdjustThrottleByVelocity() {
         var localVelocity = transform.InverseTransformDirection(rigidbody.velocity);
         float targetSpeed = MaxSpeed * controls.throttle;
+        targetSpeed *= targetSpeed;
         float speedStep = AccelerationRate * MaxSpeed * Time.fixedDeltaTime;
-        var mag = localVelocity.magnitude;
-        //todo setting velocity outright is not so good
-        if (mag > targetSpeed) {
-            rigidbody.velocity = transform.forward * targetSpeed;
-        } else if (mag < targetSpeed) {
-            rigidbody.velocity += transform.forward * speedStep;
+        var magSqr = localVelocity.sqrMagnitude;
+        Vector3 forward = transform.forward;
+
+        if (magSqr > targetSpeed) {
+            rigidbody.velocity -= (forward * speedStep);
+            if (magSqr < targetSpeed) rigidbody.velocity = forward * targetSpeed;
+
+        } else if (magSqr < targetSpeed) {
+            rigidbody.velocity += forward * speedStep;
+            if (magSqr > targetSpeed) rigidbody.velocity = forward * targetSpeed;
+
         }
+
         rigidbody.velocity = Vector3.ClampMagnitude(rigidbody.velocity, MaxSpeed);
     }
 
-    //input values are directions RELATIVE to CURRENT ORIENTATION, not accounting for angular velocity
-    //which means to actually go in the desired direction, we need to take that input and adjust for AV
+    private float Away(float inputVelocity, float maxVelocity, float radiansToGoal, float maxAcceleration, float deltaTime, bool noOvershoot) {
 
-    //this treats inputs as 'desired angular velocities' 
-    //note that we do not turn as tightly as we can in this mode because input nodes are mapped
-    //to input values, so only outer nodes will result in a full strength turn
+
+        if ((-inputVelocity < 1e-5) && (radiansToGoal < 1e-5)) {
+            return 0f;
+        }
+
+        if (maxAcceleration == 0) {
+            return inputVelocity;
+        }
+
+        float t0 = -inputVelocity / maxAcceleration; //time until velocity is zero
+
+        if (t0 > deltaTime) {	// no reversal in this time interval
+            return inputVelocity + maxAcceleration * deltaTime;
+        }
+
+        // use time remaining after v = 0
+        radiansToGoal -= 0.5f * inputVelocity * t0; //will be negative
+        return Approach(0.0f, maxVelocity, radiansToGoal, maxAcceleration, deltaTime - t0, noOvershoot);
+    }
+
+    private float Approach(float inputVelocity, float maxVelocity, float radiansToGoal, float maxAcceleration, float deltaTime, bool noOvershoot) {
+        float deltaRadiansToGoal;		// amount rotated during time delta_t
+        float effectiveAngularAcceleration;
+
+        if (maxAcceleration == 0) {
+            return inputVelocity;
+        }
+
+        if (noOvershoot && (inputVelocity * inputVelocity > 2.0f * 1.05f * maxAcceleration * radiansToGoal)) {
+            inputVelocity = Mathf.Sqrt(2.0f * maxAcceleration * radiansToGoal);
+        }
+
+        if (inputVelocity * inputVelocity > 2.0f * 1.05f * maxAcceleration * radiansToGoal) {		// overshoot condition
+            effectiveAngularAcceleration = 1.05f * maxAcceleration;
+            deltaRadiansToGoal = inputVelocity * deltaTime - 0.5f * effectiveAngularAcceleration * deltaTime * deltaTime;
+
+            if (deltaRadiansToGoal > radiansToGoal) {	// pass goal during this frame
+                float timeToGoal = (-inputVelocity + Mathf.Sqrt(inputVelocity * inputVelocity + 2.0f * effectiveAngularAcceleration * radiansToGoal)) / effectiveAngularAcceleration;
+                // get time to theta_goal and away
+                inputVelocity -= effectiveAngularAcceleration * timeToGoal;
+                return -Away(-inputVelocity, maxVelocity, 0.0f, maxAcceleration, deltaTime - timeToGoal, noOvershoot);
+            } else {
+                if (deltaRadiansToGoal < 0) {
+                    // pass goal and return this frame
+                    return 0.0f;
+                } else {
+                    // do not pass goal this frame
+                    return inputVelocity - effectiveAngularAcceleration * deltaTime;
+                }
+            }
+        } else if (inputVelocity * inputVelocity < 2.0f * 0.95f * maxAcceleration * radiansToGoal) {	// undershoot condition
+            // find peak angular velocity
+            float peakVelocitySqr = Mathf.Sqrt(maxAcceleration * radiansToGoal + 0.5f * inputVelocity * inputVelocity);
+            if (peakVelocitySqr > maxVelocity * maxVelocity) {
+                float timeToMaxVelocity = (maxVelocity - inputVelocity) / maxAcceleration;
+                if (timeToMaxVelocity < 0) {
+                    // speed already too high
+                    // TODO: consider possible ramp down to below w_max
+                    float outputVelocity = inputVelocity - maxAcceleration * deltaTime;
+                    if (outputVelocity < 0) {
+                        outputVelocity = 0.0f;
+                    }
+                    return outputVelocity;
+                } else if (timeToMaxVelocity > deltaTime) {
+                    // does not reach w_max this frame
+                    return inputVelocity + maxAcceleration * deltaTime;
+                } else {
+                    // reaches w_max this frame
+                    // TODO: consider when to ramp down from w_max
+                    return maxVelocity;
+                }
+            } else {	// wp < w_max
+                if (peakVelocitySqr > (inputVelocity + maxAcceleration * deltaTime) * (inputVelocity + maxAcceleration * deltaTime)) {
+                    // does not reach wp this frame
+                    return inputVelocity + maxAcceleration * deltaTime;
+                } else {
+                    // reaches wp this frame
+                    float wp = Mathf.Sqrt(peakVelocitySqr);
+                    float timeToPeakVelocity = (wp - inputVelocity) / maxAcceleration;
+
+                    // accel
+                    float outputVelocity = wp;
+                    // decel
+                    float timeRemaining = deltaTime - timeToPeakVelocity;
+                    outputVelocity -= maxAcceleration * timeRemaining;
+                    if (outputVelocity < 0) { // reached goal
+                        outputVelocity = 0.0f;
+                    }
+                    return outputVelocity;
+                }
+            }
+        } else {														// on target
+            // reach goal this frame
+            if (inputVelocity - maxAcceleration * deltaTime < 0) {
+                // reach goal this frame
+
+                return 0f;
+            } else {
+                // move toward goal
+                return inputVelocity - maxAcceleration * deltaTime;
+            }
+        }
+    }
 
     private void TurnTest(Vector3 direction) {
+        Vector3 localAV = transform.InverseTransformDirection(rigidbody.angularVelocity);
         Vector3 localTarget = transform.InverseTransformDirection(direction);
-        float targetAngleYaw = Mathf.Atan2(localTarget.x, localTarget.z);
-        float targetAnglePitch = -Mathf.Atan2(localTarget.y, localTarget.z);
-        float yaw = Mathf.Clamp(targetAngleYaw, -1, 1);
-        float pitch = Mathf.Clamp(targetAnglePitch, -1, 1);
-        float roll = Mathf.Clamp(-targetAngleYaw + GetRollAngle(), -1, 1);
-        controls.SetStickInputs(yaw, pitch, roll);
-        UpdatePlayerMode();
+        float radiansToTargetYaw = Mathf.Atan2(localTarget.x, localTarget.z);
+        float radiansToTargetPitch = -Mathf.Atan2(localTarget.y, localTarget.z);
+        float radiansToTargetRoll = -radiansToTargetYaw + GetRollAngle();
+        float turnRateRadians = TurnRate * Mathf.Deg2Rad;
+        float turnStep = turnRateRadians * Time.fixedDeltaTime;
+
+
+        if (ignoreAV) {
+            localAV.x = ComputeLocalAV(radiansToTargetPitch, localAV.x, turnRateRadians, 0.5f);
+            localAV.y = ComputeLocalAV(radiansToTargetYaw, localAV.y, turnRateRadians * 0.5f, 0.5f);
+            localAV.z = ComputeLocalAV(radiansToTargetRoll, localAV.z, turnRateRadians, 0.5f);
+            rigidbody.angularVelocity = transform.TransformDirection(localAV);
+        } else {
+
+            float quaterTurnRadius = turnRateRadians * 2f;
+            if (Util.Between(-quaterTurnRadius, radiansToTargetPitch, quaterTurnRadius)) {
+                localAV.x = ComputeLocalAV(radiansToTargetPitch, localAV.x, turnRateRadians, 0.5f);
+            } else {
+                localAV.x += Mathf.Sign(radiansToTargetPitch) * turnStep;
+            }
+
+            if (Util.Between(-quaterTurnRadius, radiansToTargetYaw, quaterTurnRadius)) {
+                localAV.y = ComputeLocalAV(radiansToTargetYaw, localAV.y, turnRateRadians, 0.5f);
+            } else {
+                localAV.y += Mathf.Sign(radiansToTargetYaw) * turnStep;// Mathf.Clamp(radiansToTargetYaw, -1, 1);
+            }
+
+            if (Util.Between(-quaterTurnRadius, radiansToTargetRoll, quaterTurnRadius)) {
+                localAV.z = ComputeLocalAV(radiansToTargetRoll, localAV.z, turnRateRadians, 0.5f);
+            } else {
+                localAV.z +=  Mathf.Sign(radiansToTargetRoll) * turnStep;// Mathf.Clamp(radiansToTargetRoll, -1, 1);
+            }
+          //  controls.SetStickInputs(yaw, pitch, roll);
+          //  UpdatePlayerMode();
+        }
+        localAV.x = Mathf.Clamp(localAV.x, -turnRateRadians, turnRateRadians);
+        localAV.y = Mathf.Clamp(localAV.y, -turnRateRadians, turnRateRadians);
+        localAV.z = Mathf.Clamp(localAV.z, -turnRateRadians, turnRateRadians);
+        rigidbody.angularVelocity = transform.TransformDirection(localAV);
+    }
+
+    private float ComputeLocalAV(float targetAngle, float localAV, float maxVel, float acceleration) {
+        if (targetAngle > 0) {
+            if (localAV >= 0) {
+                return Approach(localAV, maxVel, targetAngle, acceleration, Time.fixedDeltaTime, false);
+            } else {
+                return Away(localAV, maxVel, targetAngle, acceleration, Time.fixedDeltaTime, false);
+            }
+        } else if (targetAngle < 0) {
+            if (localAV <= 0) {
+                return -Approach(-localAV, maxVel, -targetAngle, acceleration, Time.fixedDeltaTime, false);
+            } else {
+                return -Away(-localAV, maxVel, -targetAngle, acceleration, Time.fixedDeltaTime, false);
+            }
+        } else {
+            return 0;
+        }
     }
 
     private void TurnTowardsDirection(Vector3 direction, float roll = 0f, float rollTheta = 50f) {
@@ -374,9 +519,7 @@ public class EngineSystem : MonoBehaviour {
     }
 
     public FlightControls FlightControls {
-        get {
-            return controls;
-        }
+        get { return controls; }
     }
 
     //todo this is a helpful function for most AI -- move it elsewhere
