@@ -4,14 +4,14 @@ using BehaviorDesigner.Runtime.Tasks;
 
 public class OrientToTarget : Action {
 
-    public AIPilot pilot;
+    public Pilot pilot;
     public SensorSystem sensors;
     public WeaponSystem weapons;
 
     private Vector3 lastTargetPos;
 
     public override void OnAwake() {
-        pilot = GetComponent<AIPilot>();
+        pilot = GetComponent<Pilot>();
         sensors = GetComponent<SensorSystem>();
         weapons = GetComponent<WeaponSystem>();
     }
@@ -43,21 +43,24 @@ public class OrientToTarget : Action {
     }
     
     public override TaskStatus OnUpdate() {
-        //right now its really hard to predict position for something turning a lot, this algorithm works great for 
-        //when target is straight but fails consistently when target is chaning direction. Try to find a way to take
-        //into account the velocity direction trend of the target and integrate that into this algorithm
-        Entity target = sensors.Target;
-        Vector3 targetVelocity = sensors.Target.GetComponent<Rigidbody>().velocity;
-        //		vm_vec_scale_add(predicted_enemy_pos, enemy_pos, &target_moving_direction, aip->time_enemy_in_range * dist/weapon_speed);
-        float t = Vector3.Distance(transform.position, target.transform.position) / 100f; //100 is weapon speed
-        Vector3 predictedPosition = target.transform.position + targetVelocity * t;
-        Vector3 targetPosition = sensors.TargetPosition;
-        Vector3 toPredicted = (predictedPosition - pilot.transform.position).normalized;
-        pilot.FlightControls.destination = predictedPosition;// +(toPredicted);// * 0.25f);
-        Debug.DrawLine(pilot.transform.position, predictedPosition, Color.yellow, Time.deltaTime);
-        //pilot.transform.rotation = Quaternion.LookRotation( (predictedPosition - pilot.transform.position).normalized, Vector3.up);
-        weapons.weaponGroups[0].Fire();
-        pilot.FlightControls.throttle = 1f;
-        return TaskStatus.Running;
+        ////right now its really hard to predict position for something turning a lot, this algorithm works great for 
+        ////when target is straight but fails consistently when target is chaning direction. Try to find a way to take
+        ////into account the velocity direction trend of the target and integrate that into this algorithm
+        //Entity target = sensors.Target;
+        //Vector3 targetVelocity = sensors.Target.GetComponent<Rigidbody>().velocity;
+        ////		vm_vec_scale_add(predicted_enemy_pos, enemy_pos, &target_moving_direction, aip->time_enemy_in_range * dist/weapon_speed);
+        //float t = Vector3.Distance(transform.position, target.transform.position) / 100f; //100 is weapon speed
+        //Vector3 predictedPosition = target.transform.position + targetVelocity * t;
+        //Vector3 targetPosition = sensors.TargetPosition;
+        //Vector3 toPredicted = (predictedPosition - pilot.transform.position).normalized;
+        //pilot.flightControls.destination = predictedPosition;// +(toPredicted);// * 0.25f);
+        ////Debug.DrawLine(pilot.transform.position, predictedPosition, Color.yellow, Time.deltaTime);
+        //weapons.weaponGroups[0].Fire();
+        //pilot.flightControls.throttle = 1f;
+        //return TaskStatus.Running;
+
+        pilot.flightControls.SetThrottle(1f);
+        pilot.engines.OrientToDirection((pilot.target.position - transform.position).normalized);
+        return TaskStatus.Success;
     }
 }

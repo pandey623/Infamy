@@ -6,9 +6,6 @@ public abstract class StandardProjectileWeapon : AbstractWeapon {
     public float spreadFactor = 1f;
     public LayerMask impactLayer;
     protected float distanceTravelled = 0f;
-    public float fireRate;
-    public float range;
-    public float speed;
     protected Vector3 forward;
 
     public override void Fire(WeaponSpawner spawner, WeaponFiringParameters firingParameters) {
@@ -33,7 +30,9 @@ public abstract class StandardProjectileWeapon : AbstractWeapon {
         RaycastHit hit;
         //distance travel check to avoid hitting our self, should work most of the time
         if (distanceTravelled > 1f && Physics.Raycast(new Ray(transform.position - forward * 2f, forward), out hit, raycastDistance, impactLayer)) {
-            spawner.SpawnImpact(hit.point + hit.normal * 0.2f, Quaternion.identity);
+            Entity victim = hit.transform.GetComponentInParent<Entity>();
+            victim.ApplyDamage(firingParameters.entity, 10f);
+            spawner.SpawnImpact(hit.point + hit.normal * 0.2f, Quaternion.identity, hit.transform);
             spawner.Despawn(gameObject);
         } else if (distanceTravelled >= range) {
             spawner.Despawn(gameObject);

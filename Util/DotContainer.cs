@@ -1,6 +1,4 @@
-﻿using System.Net;
-using UnityEditor;
-using UnityEngine;
+﻿using UnityEngine;
 
 public struct DotContainer {
     public float right;

@@ -1,47 +1,61 @@
 ﻿using UnityEngine;
 
 public class PlayerController : MonoBehaviour {
-    private Entity entity;
+
     private EngineSystem engines;
     private FlightControls flightControls;
     private WeaponSystem weaponSystem;
 
-    private float lastW;
     public float yawDamp = 0.5f;
     public float pitchDamp = 1;
     public float rollDamp = 2;
     public float startThrottle = 1f;
+    public Entity target;
+    private CameraEye cameraEye;
+    private bool focused = true;
 
     public void Start() {
-        entity = GetComponent<Entity>();
         engines = GetComponent<EngineSystem>();
-        flightControls = engines.FlightControls;
         weaponSystem = GetComponent<WeaponSystem>();
-        lastW = startThrottle;
+        flightControls = new FlightControls(yawDamp, pitchDamp, rollDamp);
+        engines.SetFlightControls(flightControls);
+        flightControls.SetStickInputs(0f, 0f, 0f, startThrottle);
+        EventManager.Instance.AddListener<Event_EntityDespawned>(OnEntityDespawned);
+        PlayerManager.PlayerEventManager.AddListener<Event_EntityDamaged>(OnDamageTaken);
+        cameraEye = GetComponentInChildren<CameraEye>();
     }
 
     public void Update() {
-        float x = Input.GetAxis("JoystickX") * yawDamp;
-        float y = Input.GetAxis("JoystickY"); 
-        float z = Input.GetAxis("JoystickZ") * rollDamp;
-        float w = Input.GetAxisRaw("JoystickThrottle");
+        if(!focused) {
+            flightControls.SetStickInputs(0f, 0f, 0f, 0f);
+            return;
+        }
+        float x = Input.GetAxis("JoystickX");
+        float y = Input.GetAxis("JoystickY");
+        float z = Input.GetAxis("JoystickZ");
+        float t = (Input.GetAxisRaw("JoystickThrottle") + 1) * 0.5f;
         bool fire = Input.GetButton("Fire1");
 
-        if (w != lastW) {
-            lastW = w;
-        } 
-
-        flightControls.SetThrottle( (lastW + 1) * 0.5f);
-        flightControls.SetStickInputs(x, y, -z);
-        if (fire) {
+        flightControls.SetStickDamping(yawDamp, pitchDamp, rollDamp);
+        flightControls.SetStickInputs(x, y, z, t);
+        if (fire && weaponSystem != null) {
             weaponSystem.weaponGroups[0].Fire();
         }
-    }
-}
 
-//missiles
-//fire groups
-//generic ui
-//afterburner
-//radar
-//targeting system / nav
+    }
+
+    public void OnApplicationFocus(bool focused) {
+        this.focused = focused;
+    }
+
+    protected void OnEntityDespawned(Event_EntityDespawned evt) {
+        if(target == evt.entity) {
+            EventManager.Instance.TriggerEvent(new Event_PlayerTargetChanged(null, evt.entity));
+        }
+    }
+
+    protected void OnDamageTaken(Event_EntityDamaged evt) {
+        cameraEye.Shake(0.05f);
+    }
+
+}

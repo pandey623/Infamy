@@ -1,6 +1,7 @@
 ﻿using System;
 using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.Assertions;
 
 public class EntityDatabaseEntry {
     public int enterCount;
@@ -15,7 +16,7 @@ public class EntityDatabaseEntry {
 
     public EntityDatabaseEntry(Entity entity) {
         this.entity = entity;
-        this.enterCount = 0;
+        this.enterCount = 1;
         this.exitCount = 0;
         this.disabled = false;
         this.destroyed = false;
@@ -28,44 +29,32 @@ public class EntityDatabaseEntry {
         get { return enterCount > 0 & exitCount < enterCount && !destroyed; }
     }
 }
-/*
-    EntityDatabase.GetHostiles(FactionId)
- * EntityDatabase.Query((e) => {
- *    if(e.type == Type.Fighter && e.health > 0.5f && e.piloted) {
- *     
- *    }
- *  var query = new Query();
- *  query.factionIds = {"1", "2"};
- *  EntityDatabase.QueryFaction(Id, () => )
- *  EntityDatabase.QueryActiveFaction(Id, () => )
- *  EntityDatatbase.IsDestroyed("entityId")
- *  EntityDatabase.HasEnteredMission("entityId")
- *  
- * MissionLog.GetRecord("EnteredBattle", "EntityId")
- * }
- */
-public static class EntityDatabase {
-    public static Dictionary<string, EntityDatabaseEntry> database;
-    public static List<Entity> entities;
-    public static List<Entity> ActiveEntities;
-    public static List<Entity> InactiveEntities;
 
-    public delegate bool EntityQuery(Entity entity);
+public static class EntityManager {
+    public static readonly Dictionary<string, EntityDatabaseEntry> database;
+    public static readonly List<Entity> entities;
 
-    public static List<Entity> Query(EntityQuery query) {
-        return null;
+
+    static EntityManager() {
+        database = new Dictionary<string, EntityDatabaseEntry>();
+        entities = new List<Entity>();
     }
 
     public static void Add(Entity entity) {
         var entry = new EntityDatabaseEntry(entity);
+        Assert.IsNull(database.Get(entity.displayName), "EntityDatabase has already registered entity with the displayName: " + entity.displayName);
+        database.Add(entity.displayName, entry);
+        EventManager.Instance.QueueEvent(new Event_EntitySpawned(entity, TimeManager.Timestamp));
+    }
+
+    public static void Remove(Entity entity) {
+        EventManager.Instance.QueueEvent(new Event_EntityDespawned(entity, TimeManager.Timestamp));
     }
 
     public static Entity GetEntity(string id) {
-        EntityDatabaseEntry entry;
-        if (database.TryGetValue(id, out entry)) {
-            return entry.entity;
-        }
-        return null;
+        EntityDatabaseEntry entry = null;
+        database.TryGetValue(id, out entry);
+        return entry.entity;
     }
 
     public static Entity[] GetEntities(string[] ids) {

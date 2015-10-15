@@ -1,7 +1,12 @@
-﻿using UnityEngine;
-using System.Collections;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 public static class Util {
+
+    public static float AngleSigned(Vector3 v1, Vector3 v2, Vector3 normal) {
+        return Mathf.Atan2(Vector3.Dot(normal, Vector3.Cross(v1, v2)), Vector3.Dot(v1, v2)) * Mathf.Rad2Deg;
+    }
+
     public static float ClampAngle(float angle, float min, float max) {
         if (angle < -360F)
             angle += 360F;
@@ -14,9 +19,11 @@ public static class Util {
     public static float WrapAngle180(float angle) {
         if (angle > 180f) {
             return -(360f - angle);
-        } else if (angle < -180f) {
+        }
+        else if (angle < -180f) {
             return angle + 360f;
-        } else if (angle == -180) {
+        }
+        else if (angle == -180) {
             return 180f;
         }
         return angle;
@@ -25,7 +32,8 @@ public static class Util {
     public static float WrapRadianPI(float radians) {
         if (radians > Mathf.PI) {
             return -((Mathf.PI * 2) - radians);
-        } else if (radians < -Mathf.PI) {
+        }
+        else if (radians < -Mathf.PI) {
             return radians + (Mathf.PI * 2f);
         }
         return radians;
@@ -44,9 +52,27 @@ public static class Util {
     }
 }
 
+public static class DictionaryExtensions {
+
+    public static U Get<T, U>(this Dictionary<T, U> dict, T key) where U : class {
+        U val;
+        dict.TryGetValue(key, out val);
+        return val;
+    }
+}
+
 public static class Vector3Extensions {
+
     public static float AnglePreNormalized(this Vector3 self, Vector3 to) {
         return Mathf.Acos(Mathf.Clamp(Vector3.Dot(self, to), -1f, 1f)) * 57.29578f;
+    }
+
+    public static Vector3 From(this Vector3 self, Vector3 other) {
+        return self - other;
+    }
+
+    public static Vector3 DirectionFrom(this Vector3 self, Vector3 other) {
+        return (self - other).normalized;
     }
 
     public static Vector3 To(this Vector3 self, Vector3 other) {

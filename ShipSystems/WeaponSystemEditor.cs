@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿#if UNITY_EDITOR
+using UnityEngine;
 using UnityEditor;
 using UnityEditorInternal;
 using System.Collections.Generic;
@@ -85,7 +86,8 @@ public class WeaponSystemEditor : Editor {
 
     private void RemoveGroup(ReorderableList list) {
         WeaponGroup group = weaponSystem.weaponGroups[list.index];
-        if (group.groupId == TurretGroup.DefaultId) {
+        if (group == null) return;
+        if (group.groupId == WeaponGroup.DefaultId) {
             Debug.Log("Default group cannot be removed");
         } else {
             for (int i = 0; i < weaponSystem.firepoints.Count; i++) {
@@ -95,12 +97,14 @@ public class WeaponSystemEditor : Editor {
                 }
             }
             weaponGroupNames.Remove(group.groupId);
+            weaponSystem.RemoveWeaponGroup(group.groupId);
             ReorderableList.defaultBehaviours.DoRemoveButton(list);
         }
     }
 
     private bool CanRemoveGroup(ReorderableList list) {
-        return weaponSystem.weaponGroups[list.index].groupId != TurretGroup.DefaultId && weaponSystem.weaponGroups.Count > 1;
+        if (weaponSystem.weaponGroups[list.index] == null) return true;
+        return weaponSystem.weaponGroups[list.index].groupId != WeaponGroup.DefaultId && weaponSystem.weaponGroups.Count > 1;
     }
 
     private void DrawWeaponGroup(Rect rect, int index, bool isActive, bool isFocused) {
@@ -108,9 +112,9 @@ public class WeaponSystemEditor : Editor {
         float height = EditorGUIUtility.singleLineHeight;
         float halfWidth = (width * 0.5f) - 25f;
         float quaterWidth = halfWidth * 0.5f;
-        float currentHeight = rect.y + 2f;
 
         WeaponGroup group = weaponSystem.weaponGroups[index];
+        if (group == null) return;
         int idx = WeaponDatabase.GetWeaponIndex(group.weaponId);
         if (idx == -1) {
             Debug.Log("Cannot find weapon: " + group.weaponId);
@@ -134,7 +138,7 @@ public class WeaponSystemEditor : Editor {
     }
 
     private void DrawFirepoint(Rect rect, int index, bool isActive, bool isFocused) {
-        var element = firepointList.serializedProperty.GetArrayElementAtIndex(index);
+      //  var element = firepointList.serializedProperty.GetArrayElementAtIndex(index);
         rect.y += 2;
         Rect r = new Rect(rect.x, rect.y, EditorGUIUtility.currentViewWidth * 0.33f, EditorGUIUtility.singleLineHeight);
         EditorGUI.LabelField(r, new GUIContent(weaponSystem.firepoints[index].name));
@@ -171,3 +175,5 @@ public class WeaponSystemEditor : Editor {
         }
     }
 }
+
+#endif

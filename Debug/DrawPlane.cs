@@ -4,10 +4,10 @@ using System.Collections;
 public class DrawPlaneUtil {
 
     //Unclear if this works or not...
-    Vector2 PointToUV(Vector3 point, Plane plane) {
+    public static Vector2 PointToUV(Vector3 point, Plane plane) {
         var planeNormal = plane.normal;
         var u = new Vector3(planeNormal.y, -planeNormal.x, 0).normalized;
-        var v = Vector3.Cross(point, u);
+        var v = Vector3.Cross(planeNormal, u);
         var uCoord = Vector3.Dot(u, point);
         var vCoord = Vector3.Dot(v, point);
         return new Vector2(uCoord, vCoord);

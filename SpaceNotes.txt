@@ -232,8 +232,6 @@ Flight Modes
 	Auto Pilot
 	AIPilot
 
-
-
 AIGoal_DestroyShips()
 	.WhenInactive()
 	
@@ -263,3 +261,20 @@ Periodic Scans
 	Friendly in trouble
 	Hostile in trouble
 
+
+
+
+
+
+
+
+
+
+
+
+
+Behavior Tree Nodes to Implement
+	- Decorator: Max Time
+	- Decorator: Min Time
+	- Decorator: Random Time (range)
+	- Sequence: Memory //Remember last child index that returned running, run that one again

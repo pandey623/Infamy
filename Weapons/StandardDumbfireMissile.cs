@@ -4,12 +4,9 @@
 [RequireComponent(typeof(Collider))]
 public abstract class StandardDumbfireMissile : AbstractWeapon {
     public float spreadFactor = 3f;
-    public float range;
-    public float speed;
-    public float fireRate;
     protected Vector3 origin;
     protected new Rigidbody rigidbody;
-    protected Collider collider;
+    protected new Collider collider;
     protected float elapsedTime;
 
     public void Awake() {

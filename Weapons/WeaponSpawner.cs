@@ -17,7 +17,7 @@ public class WeaponSpawner : MonoBehaviour {
     public GameObject weaponPrefab;
 
     protected GameObjectPool weaponPool;
-    protected AbstractWeapon referenceWeapon;
+    public AbstractWeapon referenceWeapon;
     public GameObject[] impactPrefabs;
     public GameObject[] muzzleFlashPrefabs;
 
@@ -43,10 +43,10 @@ public class WeaponSpawner : MonoBehaviour {
             hasTrail = true;
             trailTime = referenceWeapon.transform.GetComponent<TrailRenderer>().time;
         }
-        WeaponSpawner.Register(referenceWeapon.Name, this);
+        Register(referenceWeapon.Name, this);
         weaponPool = new GameObjectPool(weaponPrefab, maxPoolSize, initialPoolSize, transform);
 
-        if (impactPrefabs.Length != null && impactPrefabs.Length > 0) {
+        if (impactPrefabs != null && impactPrefabs.Length > 0) {
             impactPools = new GameObjectPool[impactPrefabs.Length];
             for (int i = 0; i < impactPrefabs.Length; i++) {
                 impactPools[i] = new GameObjectPool(impactPrefabs[i], maxImpactPoolSize, initialImpactPoolSize, transform);
@@ -117,7 +117,7 @@ public class WeaponSpawner : MonoBehaviour {
         return despawnRoot;
     }
 
-    public GameObject SpawnImpact(Vector3 position, Quaternion rotation) {
+    public GameObject SpawnImpact(Vector3 position, Quaternion rotation, Transform parent = null) {
         if (impactPools == null) return null;
         GameObject despawnRoot = impactPools[impactIdx].Spawn();
         if (despawnRoot == null) return null;

@@ -4,7 +4,6 @@ public class Timer {
 
     private float startTime = 0;
     private float timeout = 1;
-    private bool ready = false;
     private bool markedForReset = false;
 
     private static float TotalElapsedTime = 0;

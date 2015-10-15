@@ -13,9 +13,7 @@ public class StandardAspectMissile : AbstractWeapon {
     public float aspectDelay;
     public Entity target;
     public float turnRate;
-    public float speed;
     public float lifetime;
-    public float fireRate;
 
     public override void Fire(WeaponSpawner spawner, WeaponFiringParameters firingParameters) {
         this.spawner = spawner;

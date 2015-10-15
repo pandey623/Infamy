@@ -1,7 +1,7 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
 public abstract class AbstractWeaponSpawnable : MonoBehaviour {
+
     [HideInInspector]
     public float spawnTime;
     [HideInInspector]
@@ -10,17 +10,14 @@ public abstract class AbstractWeaponSpawnable : MonoBehaviour {
     public WeaponSpawner spawner;
     [HideInInspector]
     public WeaponSpawnerType type;
-    [HideInInspector]
-    public Transform parent;
 
-    public virtual void Spawn(WeaponSpawner spawner, WeaponSpawnerType type, int poolIndex, Vector3 position, Quaternion rotation, Transform parent = null) {
+    public virtual void Spawn(WeaponSpawner spawner, WeaponSpawnerType type, int poolIndex, Vector3 position, Quaternion rotation) {
         spawnTime = Time.time;
         this.poolIndex = poolIndex;
         this.spawner = spawner;
         this.type = type;
-        this.parent = parent;
-        this.transform.position = position;
-        this.transform.rotation = rotation;
+        transform.position = position;
+        transform.rotation = rotation;
     }
 
     public virtual void Spawn(WeaponSpawner spawner, WeaponSpawnerType type, int poolIndex, Transform parent) {
@@ -28,15 +25,9 @@ public abstract class AbstractWeaponSpawnable : MonoBehaviour {
         this.poolIndex = poolIndex;
         this.spawner = spawner;
         this.type = type;
-        this.parent = parent;
-        this.transform.position = parent.position;
-        this.transform.rotation = parent.rotation;
+        transform.parent = parent;
+        transform.position = parent.position;
+        transform.rotation = parent.rotation;
     }
 
-    public void Update() {
-        if (parent != null) {
-            transform.position = parent.position;
-            transform.rotation = parent.rotation;
-        }
-    }
 }

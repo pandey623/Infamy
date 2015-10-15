@@ -92,4 +92,12 @@
     public static ComparisonCondition operator !=(NumericCondition c1, float v) {
         return new ComparisonCondition(c1, ComparisonOperator.NotEqual, new FloatConstantCondition(v));
     }
+
+    public override bool Equals(object obj) {
+        return base.Equals(obj);
+    }
+
+    public override int GetHashCode() {
+        return base.GetHashCode();
+    }
 }

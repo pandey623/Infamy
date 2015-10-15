@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 
 public class CommunicationSystem {
-    private Entity entity;
+   // private Entity entity;
 
     public CommunicationSystem(Entity entity) {
-        this.entity = entity;
+     //   this.entity = entity;
     }
 }
 

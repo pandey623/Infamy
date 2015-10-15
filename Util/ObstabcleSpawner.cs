@@ -1,9 +1,9 @@
-﻿using UnityEngine;
+﻿#if UNITY_EDITOR
+using UnityEngine;
 using UnityEditor;
-using System.Collections;
 
 public class ObstabcleSpawner : MonoBehaviour {
-    
+
     public GameObject[] obstacleTypes;
     public int spawnCount = 10;
     public float spawnRange = 25;
@@ -65,3 +65,5 @@ public class ObstacleSpawnEditor : Editor {
 
     }
 }
+
+#endif

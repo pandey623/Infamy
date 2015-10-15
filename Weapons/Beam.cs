@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class Beam : AbstractWeapon {
     public float beamScale = 1f;
     public float uvCycleTime;
     public float wanderRange = 2f;
     public float lifeTime;
-    public float speed;
-    public float range;
-    public float fireRate;
     public LayerMask impactLayer;
 
     private LineRenderer lineRenderer;

@@ -1,7 +1,5 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEditor;
-using UnityEditorInternal;
 
 public class TurretSystem : MonoBehaviour {
     public List<Turret> turrets;

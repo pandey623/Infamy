@@ -6,7 +6,7 @@
     }
 
     public override bool Eval() {
-        return EntityDatabase.EntitiesDestroyed(shipIds);
+        return EntityManager.EntitiesDestroyed(shipIds);
     }
 }
 

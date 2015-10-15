@@ -3,10 +3,10 @@ using System.Collections.Generic;
 
 public class NavigationSystem {
 
-    private Entity entity;
+   // private Entity entity;
 
     public NavigationSystem(Entity entity) {
-        this.entity = entity;
+      //  this.entity = entity;
     }
 
 }

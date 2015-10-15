@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿#if UNITY_EDITOR
+using UnityEngine;
 using UnityEditor;
 using UnityEditorInternal;
 using System.Collections.Generic;
@@ -90,7 +91,6 @@ public class TurretSystemEditor : Editor {
         float height = EditorGUIUtility.singleLineHeight;
         float halfWidth = (width * 0.5f) - 25f;
         float quaterWidth = halfWidth * 0.5f;
-        float currentHeight = rect.y + 2f;
 
         TurretGroup group = turretSystem.turretGroups[index];
         int idx = WeaponDatabase.GetWeaponIndex(group.weaponId);
@@ -116,7 +116,7 @@ public class TurretSystemEditor : Editor {
     }
 
     private void DrawTurretCallback(Rect rect, int index, bool isActive, bool isFocused) {
-        var element = turretList.serializedProperty.GetArrayElementAtIndex(index);
+       // var element = turretList.serializedProperty.GetArrayElementAtIndex(index);
         rect.y += 2;
         Rect r = new Rect(rect.x, rect.y, 50, EditorGUIUtility.singleLineHeight);
         EditorGUI.LabelField(r, new GUIContent(turretSystem.turrets[index].name));
@@ -159,7 +159,7 @@ public class TurretSystemEditor : Editor {
     }
 }
 
-
+#endif
 //r = new Rect(rect.x + halfWidth + (quaterWidth * 0.75f), currentHeight - 2f, quaterWidth, height);
 //if (GUI.Button(r, new GUIContent("Reset"))) {
 //    group.Reset();

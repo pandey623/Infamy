@@ -1,6 +1,4 @@
-﻿using System;
-using UnityEngine;
-using UnityEditor;
+﻿using UnityEngine;
 using System.Collections.Generic;
 
 [RequireComponent(typeof(Entity))]
@@ -77,5 +75,16 @@ public class WeaponSystem : MonoBehaviour {
         WeaponGroup group = weaponRoot.AddComponent<WeaponGroup>();
         group.groupId = groupId;
         weaponGroups.Add(group);
+    }
+
+    public void RemoveWeaponGroup(string groupId) {
+        WeaponGroup group = weaponGroups.Find((g) => {
+            return g.groupId == groupId;
+        });
+        if (group != null) {
+            weaponGroups.Remove(group);
+            DestroyImmediate(group);
+
+        }
     }
 }

@@ -1,24 +1,33 @@
 ﻿using UnityEngine;
-using System.Collections;
+using System;
+using Random = UnityEngine.Random;
 
-public class FormationNode : MonoBehaviour {
+public class FormationNode : MonoBehaviour,  IComparable {
 
-    public float radius = 1.5f;
-    private Vector3 target;
-    Vector3 originalPosition;
+    public float radius = 2f;
 
-	void Start () {
+    protected Vector3 target;
+    protected Vector3 originalPosition;
 
+    public Formation formation;
+
+    void Start() {
         originalPosition = transform.localPosition;
         target = Random.insideUnitSphere * radius;
-	}
-	
-	void Update () {	    
-//        if ((originalPosition + target - transform.localPosition).sqrMagnitude < 1f) {
-//            target = Random.insideUnitSphere * radius;
-//        } else {
-//            //could use a lastTargetPosition to have constant speed instead of transform.position which will be slower as it approaches and faster when far away
-//            transform.localPosition = Vector3.Lerp(transform.localPosition, originalPosition + target, 0.25f * Time.deltaTime);
-//        }
-	}
+    }
+
+    void Update() {
+        if ((originalPosition + target - transform.localPosition).sqrMagnitude < 1f) {
+            target = Random.insideUnitSphere * radius;
+        }
+        else {
+            transform.localPosition = Vector3.Lerp(transform.localPosition, originalPosition + target, 0.25f *  Time.deltaTime);
+        }
+    }
+
+    public int CompareTo(object obj) {
+        FormationNode other = obj as FormationNode;
+        if (int.Parse(name) > int.Parse(other.name)) return 1;
+        return -1;
+    }
 }

@@ -18,7 +18,7 @@ public class NavPoint : MonoBehaviour {
     }
 
     public bool Reached(string entityId) {
-        Entity entity = EntityDatabase.GetEntity(entityId);
+        Entity entity = EntityManager.GetEntity(entityId);
         if(entity == null) return false;
         float distanceSquared = (transform.position - entity.transform.position).sqrMagnitude;
         return radius * radius >= distanceSquared;

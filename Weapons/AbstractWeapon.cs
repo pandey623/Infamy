@@ -4,7 +4,23 @@ using UnityEngine;
 public abstract class AbstractWeapon : MonoBehaviour, IWeapon {
     protected WeaponFiringParameters firingParameters;
     protected WeaponSpawner spawner;
+
     public float spawnOffset;
+    public float speed;
+    public float range;
+    public float fireRate;
+
+    public float Speed {
+        get { return speed; }
+    }
+
+    public float Range {
+        get { return range; }
+    }
+
+    public float FireRate {
+        get { return fireRate; }
+    }
 
     public abstract void Fire(WeaponSpawner spawner, WeaponFiringParameters firingParameters);
 
@@ -35,6 +51,5 @@ public abstract class AbstractWeapon : MonoBehaviour, IWeapon {
 //add range, hull damage, shield damage, isAspectSeeking
 
 //add IAspectSeekingWeapon
-    //AspectFOV
-    //AspectLockTime
-    
+//AspectFOV
+//AspectLockTime

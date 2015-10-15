@@ -4,24 +4,29 @@ using BehaviorDesigner.Runtime.Tasks;
 
 public class Fire : Action {
 
-    public AIPilot pilot;
+    public Pilot pilot;
     public WeaponSystem weapons;
     public SensorSystem sensors;
 
     public override void OnAwake() {
-        pilot = GetComponent<AIPilot>();
+        pilot = GetComponent<Pilot>();
         weapons = GetComponent<WeaponSystem>();
-        sensors = GetComponent<SensorSystem>();
     }
-
 
     public override TaskStatus OnUpdate() {
         //todo replace with distance from weapon firepoint to target
+        Vector3 toTarget = pilot.target.position - transform.position;
+        float goalDot = Vector3.Dot(toTarget.normalized, transform.forward);
 
-        if (weapons.weaponGroups[0].Fire()) {
-            return TaskStatus.Success;
-        } else {
-            return TaskStatus.Failure;
+        //todo get weapon range
+        if(toTarget.sqrMagnitude <= 2000 * 2000f && goalDot >= 0.98f) {
+            if (weapons.weaponGroups[0].Fire()) {
+                return TaskStatus.Success;
+            }
+            else {
+                return TaskStatus.Failure;
+            }
         }
+        return TaskStatus.Failure;
     }
 }

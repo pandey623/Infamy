@@ -4,14 +4,14 @@ using BehaviorDesigner.Runtime.Tasks;
 
 public class FindNextWaypoint : Action {
 
-    private AIPilot pilot;
+    private Pilot pilot;
 
     public override void OnAwake() {
-        pilot = GetComponent<AIPilot>();
+        pilot = GetComponent<Pilot>();
     }
 
     public override TaskStatus OnUpdate() {
-        pilot.goToPosition = pilot.waypoints[UnityEngine.Random.Range(0, 5)].position;
+        pilot.FindNextWaypoint();
         return TaskStatus.Success;
     }
 }

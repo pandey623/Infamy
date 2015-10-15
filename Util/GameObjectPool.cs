@@ -23,7 +23,7 @@ public class GameObjectPool {
 
         for (int i = 0; i < initialSize; i++) {
             GameObject poolObject = UnityEngine.Object.Instantiate(prefab, Vector3.zero, Quaternion.identity) as GameObject;
-            poolObject.hideFlags = HideFlags.HideInHierarchy;
+           poolObject.hideFlags = HideFlags.HideInHierarchy;
             poolObject.SetActive(false);
             inactiveList.Add(poolObject);
             if (parent != null) {
@@ -38,7 +38,7 @@ public class GameObjectPool {
             obj = inactiveList[inactiveList.Count - 1];
             inactiveList.RemoveAt(inactiveList.Count - 1);
         } else if (activeList.Count < maximumSize) {
-            obj = UnityEngine.Object.Instantiate(prefab, Vector3.zero, Quaternion.identity) as GameObject;
+            obj = Object.Instantiate(prefab, Vector3.zero, Quaternion.identity) as GameObject;
             obj.hideFlags = HideFlags.HideInHierarchy;
         } else {
             Debug.Log("Pool size exceeded for " + prefab.transform.name);

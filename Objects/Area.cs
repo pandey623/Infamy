@@ -19,7 +19,7 @@ public class Area : MonoBehaviour {
     }
 
     public bool ContainsEntity(string id) {
-        Entity entity = EntityDatabase.GetEntity(id);
+        Entity entity = EntityManager.GetEntity(id);
         if (entity == null || !entity.isActiveAndEnabled) return false;
         return (radius * radius) >= (transform.position - entity.transform.position).sqrMagnitude;
     }
@@ -27,7 +27,7 @@ public class Area : MonoBehaviour {
     public bool ContainsEntities(string[] entityIds) {
         float radiusSqr = radius * radius;
         Vector3 position = transform.position;
-        Entity[] entities = EntityDatabase.GetEntities(entityIds);
+        Entity[] entities = EntityManager.GetEntities(entityIds);
         for (int i = 0; i < entities.Length; i++) {
             Entity ent = entities[i];
             if(ent == null || !ent.isActiveAndEnabled) return false;
